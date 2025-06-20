@@ -8,33 +8,101 @@
 <!-- Content Row -->
 <div class="row">
 
-    <!-- Card Laporan Kas -->
+    <!-- Total Debit Kas -->
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
+        <div class="card border-left-info shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Laporan Kas</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">Rp 12.000.000</div>
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total Debit Kas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            Rp {{ number_format($totalDebitKas, 0, ',', '.') }}
+                        </div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-wallet fa-2x text-gray-300"></i>
+                        <i class="fas fa-arrow-down fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Card Laporan Infaq -->
+    <!-- Total Kredit Kas -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Total Kredit Kas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            Rp {{ number_format($totalKreditKas, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Total Santri Aktif -->
+<div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+            <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                        Total Santri Aktif
+                    </div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        {{ $totalSantriAktif }}
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Total Santri Tidak Aktif -->
+<div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-secondary shadow h-100 py-2">
+        <div class="card-body">
+            <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                        Total Santri Tidak Aktif
+                    </div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        {{ $totalSantriTidakAktif }}
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Laporan Infaq Bulan Ini -->
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-success shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Laporan Infaq Bulan Ini</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">Rp 3.500.000</div>
+                            Laporan Infaq Bulan {{ \Carbon\Carbon::now()->translatedFormat('F') }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            Rp {{ number_format($totalInfaqBulanIni, 0, ',', '.') }}
+                        </div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-donate fa-2x text-gray-300"></i>
@@ -48,54 +116,44 @@
 
 <!-- Content Row - Chart -->
 <div class="row">
-
-    <div class="col-xl-8 col-lg-7">
+    <div class="col-xl-6 col-lg-7">
         <div class="card shadow mb-4">
             <!-- Chart Header -->
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-success">Grafik Infaq per Bulan</h6>
+                <h6 class="m-0 font-weight-bold text-success">Grafik Infaq Bulan {{ \Carbon\Carbon::now()->translatedFormat('F') }}</h6>
             </div>
             <!-- Chart Body -->
             <div class="card-body">
                 <div class="chart-area">
-                    <canvas id="infaqChart" height="100"></canvas>
+                    <canvas id="infaqChart" height="120"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
 @endsection
 
 @push('scripts')
-<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
     const ctx = document.getElementById('infaqChart').getContext('2d');
+
     const infaqChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+            labels: ['Infaq Bulan Ini'],
             datasets: [{
-                label: 'Infaq Bulanan',
-                data: [1500000, 1700000, 2200000, 2000000, 3500000, 3100000],
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',  // Hijau muda untuk area
-                borderColor: 'rgba(40, 167, 69, 1)',        // Hijau utama untuk garis
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: 'rgba(40, 167, 69, 1)'
+                label: 'Total Infaq',
+                data: [{{ $totalInfaqBulanIni }}],
+                backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    display: true
-                }
-            },
             scales: {
                 y: {
                     beginAtZero: true,

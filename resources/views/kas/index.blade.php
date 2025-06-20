@@ -207,6 +207,7 @@
                         <select name="pilihan" id="pilihan" class="form-control" required>
                             <option value="" disabled selected hidden></option>
                             <option value="donasi">Donasi</option>
+                            <option value="infaq">Infaq</option>
                             <option value="lainnya">Lainnya</option>
                         </select>
                     </div>

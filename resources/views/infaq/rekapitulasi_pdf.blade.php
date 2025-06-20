@@ -10,34 +10,28 @@
         th { background-color: #eee; }
         .belum { color: red; }
         .sudah { color: green; }
-        .kop p { margin: 2px 0; }
+        .kop p { margin: 2px 0; text-align: center; }
         .line { border-bottom: 2px solid #000; margin-top: 5px; margin-bottom: 15px; }
+        h3.title { text-align: center; margin-top: 0; }
     </style>
 </head>
 <body>
 
-    {{-- Kop Surat --}}
-    <table width="100%">
-        <tr>
-            <td width="15%" align="center">
-                <img src="{{ public_path('images/logo.png') }}" alt="Logo YKIA" width="70">
-            </td>
-            <td width="85%" align="center" class="kop">
-                <h3 style="margin: 0;">YAYASAN KESEJAHTERAAN ISLAM ASAFA</h3>
-                <p>Kep Menhumham No AHU-0016323.AH.01.04</p>
-                <p><strong>Tahun {{ $tahun }}</strong></p>
-                <p>Jln Karya Bhakti no.01 RT 20 RW 14 Sukamelang, Subang</p>
-            </td>
-        </tr>
-    </table>
+    {{-- Kop Surat Tanpa Logo --}}
+    <div class="kop">
+        <p>YAYASAN KESEJAHTERAAN ISLAM ASAFA</p>
+        <p>Kep Menhumham No AHU-0016323.AH.01.04</p>
+        <p><strong>Tahun {{ $tahun }}</strong></p>
+        <p>Jln Karya Bhakti no.01 RT 20 RW 14 Sukamelang, Subang</p>
+    </div>
     <div class="line"></div>
 
     {{-- Judul --}}
-    <h3 style="text-align: center; margin-top: 10px;">Rekapitulasi Infaq Santri</h3>
+    <h3 class="title">Rekapitulasi Infaq Santri</h3>
     <p><strong>Nama Santri:</strong> {{ $santri->nama }}</p>
     <p><strong>Alamat:</strong> {{ $santri->alamat }}</p>
 
-    {{-- Tabel --}}
+    {{-- Tabel Rekap --}}
     <table>
         <thead>
             <tr>

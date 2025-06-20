@@ -114,12 +114,16 @@ class InfaqController extends Controller
             'keterangan' => $request->keterangan,
         ]);
 
-        TransaksiKas::create([
-            'tanggal' => $request->tanggal,
-            'keterangan' => 'Infaq Santri ID ' . $request->santri_id . ($request->keterangan ? ' - ' . $request->keterangan : ''),
-            'jumlah' => $request->jumlah,
-            'jenis' => 'debit',
-        ]);
+      TransaksiKas::create([
+    'tanggal' => $request->tanggal,
+    'keterangan' => 'Infaq Santri ID ' . $request->santri_id,
+    'jumlah' => $request->jumlah,
+    'jenis' => 'debit',
+    // <- Tambahkan ini:
+    'jenis_transaksi' => 'infaq',
+]);
+
+
 
         return redirect()->back()->with('success', 'Data infaq berhasil disimpan.');
     }
@@ -157,41 +161,43 @@ class InfaqController extends Controller
 
 
     // Fitur untuk menandai infaq sudah dibayar tanpa form manual
-    public function tandaiSudahBayar(Request $request)
-    {
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id',
-            'bulan' => 'required|string',
-        ]);
+   public function tandaiSudahBayar(Request $request)
+{
+    $request->validate([
+        'santri_id' => 'required|exists:santris,id',
+        'bulan' => 'required|string', // format: 'Y-m'
+    ]);
 
-        $tanggal = Carbon::createFromFormat('F Y', $request->bulan)->startOfMonth();
-        $jumlah = SettingInfaq::latest()->value('jumlah') ?? 20000;
+    $tanggal = Carbon::createFromFormat('Y-m', $request->bulan)->startOfMonth();
+    $jumlah = SettingInfaq::where('bulan', $request->bulan)->value('jumlah') ?? 20000;
 
-        $exists = Infaq::where('santri_id', $request->santri_id)
-            ->where('bulan', $request->bulan)
-            ->exists();
+    $exists = Infaq::where('santri_id', $request->santri_id)
+        ->where('bulan', $request->bulan)
+        ->exists();
 
-        if ($exists) {
-            return response()->json(['message' => 'Sudah tercatat.'], 409);
-        }
-
-        Infaq::create([
-            'santri_id' => $request->santri_id,
-            'bulan' => $request->bulan,
-            'tanggal' => $tanggal->toDateString(),
-            'jumlah' => $jumlah,
-            'keterangan' => 'Ditandai manual oleh bendahara',
-        ]);
-
-        TransaksiKas::create([
-            'tanggal' => $tanggal,
-            'keterangan' => 'Infaq dari Santri ID ' . $request->santri_id,
-            'jumlah' => $jumlah,
-            'jenis' => 'debit',
-        ]);
-
-        return response()->json(['message' => 'Infaq berhasil ditandai.']);
+    if ($exists) {
+        return response()->json(['message' => 'Sudah tercatat.'], 409);
     }
+
+    Infaq::create([
+        'santri_id' => $request->santri_id,
+        'bulan' => $request->bulan,
+        'tanggal' => $tanggal->toDateString(),
+        'jumlah' => $jumlah,
+        'keterangan' => 'Ditandai manual oleh bendahara',
+    ]);
+
+    TransaksiKas::create([
+        'tanggal' => $tanggal->toDateString(), // ✅ pastikan ini terisi
+        'keterangan' => 'Infaq dari Santri ID ' . $request->santri_id,
+        'jumlah' => $jumlah,
+        'jenis' => 'debit',
+        'jenis_transaksi' => 'infaq',
+    ]);
+
+    return response()->json(['message' => 'Infaq berhasil ditandai.']);
+}
+
     // use App\Models\SettingInfaq; pastikan ini ada di atas jika belum
 
 public function storeSetting(Request $request)
@@ -223,39 +229,41 @@ public function bayarInfaq(Request $request, $santri_id)
     ]);
 
     $bulan = $request->bulan;
-
     $setting = SettingInfaq::where('bulan', $bulan)->first();
+
     if (!$setting) {
         return back()->with('error', 'Setting belum tersedia untuk bulan ini.');
     }
 
     $sudah = Infaq::where('santri_id', $santri_id)
         ->where('bulan', $bulan)
-        ->first();
+        ->exists();
 
     if ($sudah) {
         return back()->with('error', 'Santri sudah bayar untuk bulan ini.');
     }
 
-    $tanggalBayar = now();
+    $tanggalBayar = Carbon::now();
 
     Infaq::create([
         'santri_id' => $santri_id,
-        'tanggal' => $tanggalBayar,
+        'tanggal' => $tanggalBayar->toDateString(),
         'jumlah' => $setting->jumlah,
         'bulan' => $bulan,
-        'keterangan' => 'Bayar infaq bulan ' . \Carbon\Carbon::parse($bulan . '-01')->translatedFormat('F Y'),
+        'keterangan' => 'Bayar infaq bulan ' . Carbon::parse($bulan . '-01')->translatedFormat('F Y'),
     ]);
 
     TransaksiKas::create([
-        'tanggal' => $tanggalBayar,
+        'tanggal' => $tanggalBayar->toDateString(), 
         'keterangan' => 'Pembayaran Infaq Santri ID ' . $santri_id,
         'jumlah' => $setting->jumlah,
         'jenis' => 'debit',
+        'jenis_transaksi' => 'infaq',
     ]);
 
     return back()->with('success', 'Pembayaran berhasil ditandai.');
 }
+
 public function batalBayar($id)
 {
     $infaq = Infaq::findOrFail($id);
@@ -359,4 +367,20 @@ public function downloadRekapPdf(Santri $santri, $tahun)
 
     return $pdf->download("Rekap_Infaq_{$santri->nama}_{$tahun}.pdf");
 }
+public function export(Request $request)
+{
+    $tahun = $request->tahun ?? now()->year;
+    $bulan = $request->bulan ?? now()->format('m');
+
+    $infaq = Infaq::whereYear('tanggal', $tahun)
+                 ->whereMonth('tanggal', $bulan)
+                 ->with('santri')
+                 ->get();
+
+    $pdf = PDF::loadView('infaq.export-pdf', compact('infaq', 'bulan', 'tahun'))
+              ->setPaper('A4', 'portrait');
+
+    return $pdf->download("Rekap-Infaq-{$bulan}-{$tahun}.pdf");
+}
+
 }

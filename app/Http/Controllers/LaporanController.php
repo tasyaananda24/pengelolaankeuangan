@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Infaq;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 class LaporanController extends Controller
 {
     public function index()
@@ -48,30 +48,44 @@ class LaporanController extends Controller
         ]);
     }
     public function laporanInfaq(Request $request)
-    {
-        $bulanParam = $request->get('bulan', date('Y-m'));
-        $carbonBulan = Carbon::parse($bulanParam . '-01');
+{
+    $tahun = $request->get('tahun', now()->year);
 
-        $laporan = Infaq::select('santri_id', DB::raw('SUM(jumlah) as jumlah'))
-            ->whereMonth('tanggal', $carbonBulan->month)
-            ->whereYear('tanggal', $carbonBulan->year)
-            ->groupBy('santri_id')
-            ->with('santri') // pastikan relasi santri sudah ada di model Infaq
-            ->get()
-            ->map(function ($item) {
-                return (object)[
-                    'nama' => $item->santri->nama,
-                    'jumlah' => $item->jumlah
-                ];
-            });
+    // Ambil total infaq per bulan dalam tahun yang dipilih
+    $infaqPerBulan = Infaq::where('bulan', 'like', "$tahun-%")
+        ->get()
+        ->groupBy('bulan')
+        ->map(function ($items) {
+            return $items->sum('jumlah');
+        });
 
-        $totalInfaq = $laporan->sum('jumlah');
-        $bulanFormatted = $carbonBulan->translatedFormat('F Y');
+    // Total keseluruhan
+    $totalKeseluruhan = $infaqPerBulan->sum();
 
-        return view('laporan.laporan-infaq', [
-            'laporan' => $laporan,
-            'totalInfaq' => $totalInfaq,
-            'bulanSelected' => $bulanFormatted,
-        ]);
-    }
-} 
+    // Ambil list tahun dari isi kolom bulan
+    $tahunList = Infaq::selectRaw("SUBSTRING(bulan, 1, 4) as tahun")
+        ->distinct()
+        ->pluck('tahun')
+        ->sortDesc();
+
+    return view('laporan.infaq', compact('infaqPerBulan', 'totalKeseluruhan', 'tahun', 'tahunList'));
+}
+public function laporanInfaqPdf($tahun)
+{
+    $infaqPerBulan = Infaq::where('bulan', 'like', "$tahun-%")
+        ->get()
+        ->groupBy('bulan')
+        ->map(fn($items) => $items->sum('jumlah'));
+
+    $totalKeseluruhan = $infaqPerBulan->sum();
+
+    $bulanNama = [
+        '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+        '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+        '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+    ];
+
+    $pdf = Pdf::loadView('laporan.infaq_pdf', compact('tahun', 'infaqPerBulan', 'totalKeseluruhan', 'bulanNama'));
+    return $pdf->stream("laporan-infaq-$tahun.pdf");
+}
+}

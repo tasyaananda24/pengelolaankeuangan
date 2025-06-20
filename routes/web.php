@@ -67,11 +67,11 @@ Route::get('/', [HomeController::class, 'index']); // Halaman publik sebelum log
    // Kelola Infaq
 // --- Laporan Infaq (Khusus Ketua) ---
 Route::get('/laporan-infaq', [LaporanController::class, 'laporanInfaq'])->name('laporan.infaq');
+Route::get('/laporan-infaq/pdf/{tahun}', [LaporanController::class, 'laporanInfaqPdf'])->name('laporan.infaq.pdf');
 
 // --- Rekap / Export Infaq Per Santri ---
 Route::get('/infaq/download/{santri}/{tahun}', [InfaqController::class, 'download'])->name('infaq.download');
 Route::get('/infaq/rekapitulasi/{santri}/{tahun}', [InfaqController::class, 'rekapitulasi'])->name('infaq.download');
-Route::get('/infaq/{santri}/{tahun}/rekap-pdf', [InfaqController::class, 'downloadRekapPdf'])->name('infaq.download.pdf');
 
 
 

@@ -24,7 +24,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                       <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" readonly required>
+                        <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" readonly required>
                     </div>
                     <div class="col-md-2">
                         <input type="number" name="jumlah" class="form-control" placeholder="Jumlah" required>
@@ -52,7 +52,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                       <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" readonly required>
+                        <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" readonly required>
                     </div>
                     <div class="col-md-2">
                         <input type="number" name="jumlah" class="form-control" placeholder="Jumlah" required>
@@ -68,134 +68,127 @@
         </div>
     </div>
 
-    
-       {{-- Tabel Saldo --}}
-<div class="card">
-    <div class="card-header">Daftar Saldo Tabungan Santri</div>
-    <div class="card-body">
-        <table class="table table-bordered table-striped">
-            <thead class="thead-light">
-                <tr>
-                    <th>Nama Santri</th>
-                    <th>Saldo</th>
-                    <th>Setoran Terakhir</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php $totalSaldo = 0; @endphp
-                @foreach ($santris as $santri)
-                    @php
-                        $setoran = $santri->tabungans->where('jenis', 'setoran')->sum('jumlah');
-                        $penarikan = $santri->tabungans->where('jenis', 'penarikan')->sum('jumlah');
-                        $saldo = $setoran - $penarikan;
-                        $totalSaldo += $saldo;
-                        $lastSetoran = $santri->tabungans
-                            ->where('jenis', 'setoran')
-                            ->sortByDesc('tanggal')
-                            ->first();
-                    @endphp
+    {{-- Tabel Saldo --}}
+    <div class="card">
+        <div class="card-header">Daftar Saldo Tabungan Santri</div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-light">
                     <tr>
-                        <td>{{ $santri->nama }}</td>
-                        <td>Rp {{ number_format($saldo, 0, ',', '.') }}</td>
-                        <td>{{ optional($lastSetoran)->tanggal ?? '-' }}</td>
-                        <td>
-                            <button class="btn btn-sm btn-info"
-                                onclick="showDetail({{ $santri->id }}, '{{ $santri->nama }}')">Detail</button>
-                        </td>
+                        <th>Nama Santri</th>
+                        <th>Saldo</th>
+                        <th>Setoran Terakhir</th>
+                        <th>Aksi</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-
-        <div class="mt-3">
-            <h5>Total Saldo: 
-                <span id="totalSaldo" class="font-weight-bold text-success">
-                    Rp {{ number_format($totalSaldo, 0, ',', '.') }}
-                </span>
-            </h5>
-        </div>
-    </div>
-</div>
-
-
-{{-- Modal Detail --}}
-<div class="modal fade" id="detailTabunganModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detail Tabungan <span id="namaSantri"></span></h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-bordered" id="detailTable">
-                    <thead>
+                </thead>
+                <tbody>
+                    @php $totalSaldo = 0; @endphp
+                    @foreach ($santris as $santri)
+                        @php
+                            $setoran = $santri->tabungans->where('jenis', 'setoran')->sum('jumlah');
+                            $penarikan = $santri->tabungans->where('jenis', 'penarikan')->sum('jumlah');
+                            $saldo = $setoran - $penarikan;
+                            $totalSaldo += $saldo;
+                            $lastSetoran = $santri->tabungans->where('jenis', 'setoran')->sortByDesc('tanggal')->first();
+                        @endphp
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Jenis</th>
-                            <th>Jumlah</th>
-                            <th>Keterangan</th>
-                            <th>Aksi</th>
+                            <td>{{ $santri->nama }}</td>
+                            <td>Rp {{ number_format($saldo, 0, ',', '.') }}</td>
+                            <td>{{ optional($lastSetoran)->tanggal ?? '-' }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info"
+                                    onclick="showDetail({{ $santri->id }}, '{{ $santri->nama }}')">Detail</button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                    @endforeach
+                </tbody>
+            </table>
 
-                {{-- Total Saldo --}}
-                <div class="mt-3 text-right">
-                    <h5>Total Tabungan: 
-                        <span id="totalTabunganSantri" class="text-primary">Rp 0</span>
-                    </h5>
-                </div>
-
-                <div class="mt-4 d-flex justify-content-between">
-                    <a href="#" target="_blank" class="btn btn-secondary" id="btnCetak">Cetak PDF</a>
-                    <a href="#" target="_blank" class="btn btn-success" id="btnWhatsapp">Kirim via WhatsApp</a>
-                </div>
+            <div class="mt-3">
+                <h5>Total Saldo: 
+                    <span id="totalSaldo" class="font-weight-bold text-success">
+                        Rp {{ number_format($totalSaldo, 0, ',', '.') }}
+                    </span>
+                </h5>
             </div>
         </div>
     </div>
-</div>
 
-
-{{-- Modal Edit --}}
-<div class="modal fade" id="editTransaksiModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <form id="editTransaksiForm">
-            @csrf
-            @method('PUT')
+    {{-- Modal Detail --}}
+    <div class="modal fade" id="detailTabunganModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Transaksi</h5>
+                    <h5 class="modal-title">Detail Tabungan <span id="namaSantri"></span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="id" id="editId">
-                    <div class="form-group">
-                        <label>Tanggal</label>
-                        <input type="date" name="tanggal" class="form-control" id="editTanggal">
+                    <table class="table table-bordered" id="detailTable">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Jenis</th>
+                                <th>Jumlah</th>
+                                <th>Keterangan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+
+                    <div class="mt-3 text-right">
+                        <h5>Total Tabungan: 
+                            <span id="totalTabunganSantri" class="text-primary">Rp 0</span>
+                        </h5>
                     </div>
-                    <div class="form-group">
-                        <label>Jenis</label>
-                        <select name="jenis" class="form-control" id="editJenis">
-                            <option value="setoran">Setoran</option>
-                            <option value="penarikan">Penarikan</option>
-                        </select>
+
+                    <div class="mt-4 text-right">
+                        <a href="#" target="_blank" class="btn btn-secondary" id="btnCetak">Cetak PDF</a>
                     </div>
-                    <div class="form-group">
-                        <label>Jumlah</label>
-                        <input type="number" name="jumlah" class="form-control" id="editJumlah">
-                    </div>
-                    <div class="form-group">
-                        <label>Keterangan</label>
-                        <input type="text" name="keterangan" class="form-control" id="editKeterangan">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
             </div>
-        </form>
+        </div>
+    </div>
+
+    {{-- Modal Edit --}}
+    <div class="modal fade" id="editTransaksiModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <form id="editTransaksiForm">
+                @csrf
+                @method('PUT')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Transaksi</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="editId">
+                        <div class="form-group">
+                            <label>Tanggal</label>
+                            <input type="date" name="tanggal" class="form-control" id="editTanggal">
+                        </div>
+                        <div class="form-group">
+                            <label>Jenis</label>
+                            <select name="jenis" class="form-control" id="editJenis">
+                                <option value="setoran">Setoran</option>
+                                <option value="penarikan">Penarikan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jumlah</label>
+                            <input type="number" name="jumlah" class="form-control" id="editJumlah">
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan</label>
+                            <input type="text" name="keterangan" class="form-control" id="editKeterangan">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
@@ -205,78 +198,12 @@
 function showDetail(santriId, nama) {
     $('#namaSantri').text(nama);
     $('#detailTable tbody').empty();
-    $('#totalTabunganSantri').text('Rp 0'); // Reset tampilan total
-
-    // Set link cetak dan WhatsApp
-    $('#btnCetak').attr('href', `/tabungan/cetak/${santriId}`);
-    
-    const namaEncoded = encodeURIComponent(nama);
-const link = `${window.location.origin}/tabungan/cetak/${santriId}`;
-const pesan = `Assalamualaikum, berikut laporan tabungan santri *${nama}*:\nSilakan buka: ${link}`;
-const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
-$('#btnWhatsapp').attr('href', whatsappUrl);
-
-
-    // Ambil data tabungan santri via AJAX
-    $.get(`/tabungan/detail/${santriId}`, function(res) {
-        if (res.success) {
-            let total = 0;
-
-            res.data.forEach(item => {
-                let jumlah = parseInt(item.jumlah) || 0;
-
-                // Hitung saldo total
-                if (item.jenis === 'setoran') {
-                    total += jumlah;
-                } else if (item.jenis === 'penarikan') {
-                    total -= jumlah;
-                }
-
-                // Buat row tabel
-                let jenisBadge = item.jenis === 'setoran' ?
-                    '<span class="badge badge-success">Setoran</span>' :
-                    '<span class="badge badge-danger">Penarikan</span>';
-
-                let row = `
-                    <tr>
-                        <td>${item.tanggal}</td>
-                        <td>${jenisBadge}</td>
-                        <td>Rp ${jumlah.toLocaleString('id-ID')}</td>
-                        <td>${item.keterangan ?? '-'}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" onclick="editTransaksi(${item.id})">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="hapusTransaksi(${item.id})">Hapus</button>
-                        </td>
-                    </tr>`;
-                $('#detailTable tbody').append(row);
-            });
-
-            // Tampilkan total tabungan
-            $('#totalTabunganSantri').text('Rp ' + total.toLocaleString('id-ID'));
-
-            // Tampilkan modal
-            $('#detailTabunganModal').modal('show');
-        }
-    });
-}
-
-function showDetail(santriId, nama) {
-    $('#namaSantri').text(nama);
-    $('#detailTable tbody').empty();
     $('#totalTabunganSantri').text('Rp 0');
 
     const baseUrl = window.location.origin;
     const cetakUrl = `${baseUrl}/tabungan/cetak/${santriId}`;
-
-    // Format pesan WhatsApp dengan link dapat diklik
-    const pesan = `Assalamualaikum, berikut laporan tabungan santri *${nama}*. Silakan buka tautan berikut:\n${cetakUrl}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
-
-    // Set link tombol
     $('#btnCetak').attr('href', cetakUrl);
-    $('#btnWhatsapp').attr('href', whatsappUrl);
 
-    // Ambil data tabungan via AJAX
     $.get(`/tabungan/detail/${santriId}`, function(res) {
         if (res.success) {
             let total = 0;
@@ -303,15 +230,11 @@ function showDetail(santriId, nama) {
                 $('#detailTable tbody').append(row);
             });
 
-            // Tampilkan total saldo
             $('#totalTabunganSantri').text('Rp ' + total.toLocaleString('id-ID'));
-
-            // Tampilkan modal detail
             $('#detailTabunganModal').modal('show');
         }
     });
 }
-
 
 function editTransaksi(id) {
     $.get(`/tabungan/transaksi/${id}`, function(res) {
@@ -371,6 +294,9 @@ function hapusTransaksi(id) {
     }
 }
 
-
+// Fallback jika tombol close tidak berfungsi
+$(document).on('click', '#detailTabunganModal .close', function () {
+    $('#detailTabunganModal').modal('hide');
+});
 </script>
 @endsection
