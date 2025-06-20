@@ -27,10 +27,11 @@
                     <td style="text-align: left;">{{ $santri->nama }}</td>
                     @foreach($bulanUnik as $blnKey)
                         @php
-                            $pembayaran = $santri->infaq
-                                ->where('tanggal', '>=', \Carbon\Carbon::parse($blnKey)->startOfMonth())
-                                ->where('tanggal', '<=', \Carbon\Carbon::parse($blnKey)->endOfMonth())
-                                ->first();
+                            $start = \Carbon\Carbon::parse($blnKey)->startOfMonth();
+                            $end = \Carbon\Carbon::parse($blnKey)->endOfMonth();
+                            $pembayaran = $santri->infaq->first(function($i) use ($start, $end) {
+                                return $i->tanggal >= $start && $i->tanggal <= $end;
+                            });
                         @endphp
                         <td>
                             @if($pembayaran)

@@ -65,25 +65,38 @@ Route::get('/', [HomeController::class, 'index']); // Halaman publik sebelum log
     Route::resource('/santri', SantriController::class);
    
    // Kelola Infaq
-Route::get('/infaq/export', [InfaqController::class, 'export'])->name('infaq.export');
+// --- Laporan Infaq (Khusus Ketua) ---
 Route::get('/laporan-infaq', [LaporanController::class, 'laporanInfaq'])->name('laporan.infaq');
 
+// --- Rekap / Export Infaq Per Santri ---
+Route::get('/infaq/download/{santri}/{tahun}', [InfaqController::class, 'download'])->name('infaq.download');
+Route::get('/infaq/rekapitulasi/{santri}/{tahun}', [InfaqController::class, 'rekapitulasi'])->name('infaq.download');
+Route::get('/infaq/{santri}/{tahun}/rekap-pdf', [InfaqController::class, 'downloadRekapPdf'])->name('infaq.download.pdf');
+
+
+
+// --- Infaq CRUD & Detail ---
 Route::get('/infaq', [InfaqController::class, 'index'])->name('infaq.index');
-Route::get('/infaq/create', [InfaqController::class, 'create'])->name('infaq.create');
 Route::post('/infaq', [InfaqController::class, 'store'])->name('infaq.store');
 Route::get('/infaq/{id}/edit', [InfaqController::class, 'edit'])->name('infaq.edit');
 Route::put('/infaq/{id}', [InfaqController::class, 'update'])->name('infaq.update');
 Route::delete('/infaq/{id}', [InfaqController::class, 'destroy'])->name('infaq.destroy');
-Route::get('/infaq/{id}', [InfaqController::class, 'show'])->name('infaq.show');
-Route::post('/infaq/update-jumlah', [InfaqController::class, 'updateJumlahInfaq'])->name('infaq.updateJumlah');
-Route::get('/infaq/setting', [InfaqController::class, 'showSettingForm'])->name('infaq.setting');
-Route::post('/infaq/setting', [InfaqController::class, 'storeSetting'])->name('infaq.setting.store');
-Route::get('/infaq/list/{bulan}', [InfaqController::class, 'showList'])->name('infaq.list');
+
+// --- Detail Infaq Per Santri ---
+Route::get('/infaq/detail/{santri}', [InfaqController::class, 'show'])->name('infaq.show');
+
+// --- Bayar / Batal Bayar ---
 Route::post('/infaq/bayar/{id}', [InfaqController::class, 'bayarInfaq'])->name('infaq.bayar');
 Route::patch('/infaq/batal/{id}', [InfaqController::class, 'batalBayar'])->name('infaq.batal');
-Route::get('/infaq/detail/{santri}', [InfaqController::class, 'show'])->name('infaq.show');
-Route::get('/infaq/{santri}/download', [InfaqController::class, 'download'])->name('infaq.download');
+
+// --- Setting Jumlah Infaq Bulanan ---
+Route::get('/infaq/setting', [InfaqController::class, 'showSettingForm'])->name('infaq.setting');
+Route::post('/infaq/setting', [InfaqController::class, 'storeSetting'])->name('infaq.setting.store');
 Route::delete('/infaq/setting/{id}', [InfaqController::class, 'destroySetting'])->name('infaq.setting.destroy');
+Route::post('/infaq/update-jumlah', [InfaqController::class, 'updateJumlahInfaq'])->name('infaq.updateJumlah');
+
+// --- List Infaq Per Bulan ---
+Route::get('/infaq/list/{bulan}', [InfaqController::class, 'showList'])->name('infaq.list');
 
 
     // Kelola Santri

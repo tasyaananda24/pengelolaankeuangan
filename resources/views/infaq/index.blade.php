@@ -38,75 +38,110 @@
 
     {{-- Tombol Tampilkan Form Setting --}}
     <div class="mb-3">
-        <button class="btn btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#form-setting-infaq" aria-expanded="false" aria-controls="form-setting-infaq">
-            + Setting Infaq Bulanan
-        </button>
-    </div>
+    <button class="btn btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#form-setting-infaq" aria-expanded="false" aria-controls="form-setting-infaq">
+        + Setting Infaq Bulanan
+    </button>
+</div>
 
-    {{-- Form Setting Jumlah Infaq Bulanan --}}
-    <div id="form-setting-infaq" class="collapse card shadow-sm mb-4">
-        <div class="card-header bg-light"><strong>Form Setting Infaq Bulanan</strong></div>
-        <div class="card-body">
-            <form action="{{ route('infaq.setting.store') }}" method="POST" class="row g-3">
-                @csrf
-                <div class="col-md-4">
-                    <label>Bulan</label>
-                    <input type="month" name="bulan" class="form-control" required>
-                </div>
-                <div class="col-md-4">
-                    <label>Jumlah</label>
-                    <input type="number" name="jumlah" class="form-control" required>
-                </div>
-                <div class="col-md-4">
-                    <label>Keterangan</label>
-                    <input type="text" name="keterangan" class="form-control">
-                </div>
-                <div class="col-12">
-                    <button class="btn btn-primary">Simpan Setting</button>
-                </div>
-            </form>
-        </div>
-    </div>
+@php
+    $bulanTerpakai = $settingInfaq->map(fn($item) => \Carbon\Carbon::parse($item->bulan)->format('Y-m'))->toArray();
+@endphp
 
-    {{-- Tabel Setting Infaq --}}
-@if($settingInfaq && $settingInfaq->count())
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-light"><strong>Daftar Setting Infaq</strong></div>
-    <div class="card-body table-responsive">
-        <table class="table table-bordered">
-            <thead class="table-light">
-                <tr class="text-center">
-                    <th>No</th>
-                    <th>Bulan</th>
-                    <th>Jumlah</th>
-                    <th>Keterangan</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($settingInfaq as $index => $setting)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ \Carbon\Carbon::parse($setting->bulan)->translatedFormat('F Y') }}</td>
-                        <td>Rp {{ number_format($setting->jumlah, 0, ',', '.') }}</td>
-                        <td>{{ $setting->keterangan ?? '-' }}</td>
-                        <td class="text-center">
-                            <form action="{{ route('infaq.setting.destroy', $setting->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus setting bulan ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-danger">
-                                    <i class="fas fa-trash"></i> Hapus
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+<div id="form-setting-infaq" class="collapse card shadow-sm mb-4">
+    <div class="card-header bg-light"><strong>Form Setting Infaq Bulanan</strong></div>
+    <div class="card-body">
+        <form action="{{ route('infaq.setting.store') }}" method="POST" class="row g-3" id="formSettingInfaq" novalidate>
+            @csrf
+            <div class="col-md-4 position-relative">
+                <label for="bulan">Bulan & Tahun</label>
+                <input type="month" id="bulan" name="bulan" class="form-control" required>
+                <div id="errorBulan" class="invalid-feedback" style="display:none;">
+                    Bulan ini sudah pernah disetting. Silakan pilih bulan lain.
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label>Jumlah</label>
+                <input type="number" name="jumlah" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label>Keterangan</label>
+                <input type="text" name="keterangan" class="form-control">
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" id="btnSubmit">Simpan Setting</button>
+            </div>
+        </form>
     </div>
 </div>
-@endif
 
+<script>
+    const bulanTerpakai = @json($bulanTerpakai);
+    const inputBulan = document.getElementById('bulan');
+    const errorBulan = document.getElementById('errorBulan');
+    const form = document.getElementById('formSettingInfaq');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    inputBulan.addEventListener('input', function() {
+        const val = this.value; // format 'YYYY-MM'
+        if (bulanTerpakai.includes(val)) {
+            this.classList.add('is-invalid');
+            errorBulan.style.display = 'block';
+            btnSubmit.disabled = true;
+        } else {
+            this.classList.remove('is-invalid');
+            errorBulan.style.display = 'none';
+            btnSubmit.disabled = false;
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (inputBulan.classList.contains('is-invalid')) {
+            e.preventDefault();
+            inputBulan.focus();
+        }
+    });
+</script>
+
+
+
+
+    
+    {{-- Tabel Setting Infaq --}}
+    @if($settingInfaq && $settingInfaq->count())
+    <div class="mb-4">
+        <h5 class="mb-3">Daftar Setting Infaq</h5>
+        <div class="row g-3">
+            @foreach($settingInfaq as $setting)
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h6 class="card-title mb-1">
+                                    {{ \Carbon\Carbon::parse($setting->bulan)->translatedFormat('F Y') }}
+                                </h6>
+                                <p class="card-text mb-1">
+                                    <strong>Jumlah:</strong> Rp {{ number_format($setting->jumlah, 0, ',', '.') }}
+                                </p>
+                                <p class="card-text text-muted mb-2">
+                                    <small>{{ $setting->keterangan ?? 'Tidak ada keterangan' }}</small>
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <form action="{{ route('infaq.setting.destroy', $setting->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus setting bulan ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="Hapus Setting">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endif
 
     {{-- Tabel Rekap Infaq --}}
     <div class="card shadow-sm">
@@ -114,21 +149,25 @@
         <div class="card-body table-responsive">
             <table class="table table-bordered table-hover">
                 <thead class="table-light">
-                    <tr>
-                        <th>Nama Santri</th>
-                        @foreach($bulanLabel as $label)
-                            <th class="text-center">{{ $label }}</th>
-                        @endforeach
-                        <th class="text-center">Unduh</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th>Nama Santri</th>
+        @foreach($bulanUnik as $blnKey)
+            <th class="text-center">
+                {{ \Carbon\Carbon::createFromFormat('Y-m', $blnKey)->translatedFormat('F') }}
+            </th>
+        @endforeach
+        <th class="text-center">Unduh</th>
+    </tr>
+</thead>
+
                 <tbody>
                     @foreach($santris as $santri)
                         <tr>
                             <td>{{ $santri->nama }}</td>
                             @foreach($bulanUnik as $blnKey)
                                 @php
-                                    $pembayaran = $santri->infaq->firstWhere(fn($i) => \Carbon\Carbon::parse($i->tanggal)->format('Y-m') === $blnKey);
+                                    // Perbaikan utama: gunakan kolom 'bulan' bukan 'tanggal'
+                                    $pembayaran = $santri->infaq->firstWhere('bulan', $blnKey);
                                     $bulanFormatted = \Carbon\Carbon::createFromFormat('Y-m', $blnKey)->translatedFormat('F Y');
                                 @endphp
                                 <td class="text-center">
@@ -150,9 +189,16 @@
                                 </td>
                             @endforeach
                             <td class="text-center">
-                                <a href="{{ route('infaq.download', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-warning">
-                                    <i class="fas fa-download"></i> Unduh
+                                <td class="text-center">
+                                <a href="{{ route('infaq.download', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-warning mb-1">
+                                    <i class="fas fa-table"></i> Detail
                                 </a>
+                                <br>
+                                <a href="{{ route('infaq.download.pdf', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </a>
+                            </td>
+
                             </td>
                         </tr>
                     @endforeach

@@ -155,29 +155,6 @@ class InfaqController extends Controller
         return redirect()->route('infaq.index')->with('success', 'Infaq berhasil dihapus');
     }
 
-    public function export(Request $request)
-    {
-        $search = $request->search;
-
-        $santris = Santri::with('infaq')
-            ->when($search, function ($query) use ($search) {
-                $query->where('nama', 'like', '%' . $search . '%');
-            })->get();
-
-        $bulanUnik = Infaq::selectRaw('DATE_FORMAT(tanggal, "%Y-%m-01") as bulan')
-            ->distinct()
-            ->orderBy('bulan')
-            ->pluck('bulan');
-
-        $bulanLabel = $bulanUnik->map(function ($bln) {
-            return Carbon::parse($bln)->translatedFormat('F Y');
-        });
-
-        $pdf = Pdf::loadView('infaq.export-pdf', compact('santris', 'bulanUnik', 'bulanLabel'))
-            ->setPaper('a4', 'landscape');
-
-        return $pdf->download('Laporan-Infaq-Bulanan.pdf');
-    }
 
     // Fitur untuk menandai infaq sudah dibayar tanpa form manual
     public function tandaiSudahBayar(Request $request)
@@ -279,7 +256,7 @@ public function bayarInfaq(Request $request, $santri_id)
 
     return back()->with('success', 'Pembayaran berhasil ditandai.');
 }
-public function batalInfaq($id)
+public function batalBayar($id)
 {
     $infaq = Infaq::findOrFail($id);
 
@@ -298,16 +275,7 @@ public function show($id)
     $santri = Santri::with('infaq')->findOrFail($id);
     return view('infaq.detail', compact('santri'));
 }
-public function download(Santri $santri, Request $request)
-{
-    $tahun = $request->get('tahun') ?? now()->year;
-    
-    $infaqs = $santri->infaq()->whereYear('tanggal', $tahun)->get();
 
-    $pdf = PDF::loadView('infaq.cetak', compact('santri', 'infaqs', 'tahun'));
-
-    return $pdf->download("Infaq_{$santri->nama}_{$tahun}.pdf");
-}
 public function destroySetting($id)
 {
     $setting = SettingInfaq::findOrFail($id);
@@ -316,5 +284,79 @@ public function destroySetting($id)
     return redirect()->back()->with('success', 'Setting infaq berhasil dihapus.');
 }
 
+public function laporanKetua(Request $request)
+{
+    $tahun = $request->get('tahun', now()->year);
 
+    $bulanUnik = SettingInfaq::whereYear('bulan', $tahun)
+        ->orderBy('bulan')
+        ->pluck('bulan')
+        ->unique()
+        ->values();
+
+    $settingInfaq = SettingInfaq::whereYear('bulan', $tahun)->get();
+    $santris = Santri::with(['infaq' => function ($q) use ($tahun) {
+        $q->whereYear('bulan', $tahun);
+    }])->get();
+
+    $tahunList = SettingInfaq::selectRaw('YEAR(bulan) as tahun')
+        ->distinct()->pluck('tahun')->sortDesc();
+
+    return view('infaq.laporan_ketua', compact(
+        'bulanUnik', 'settingInfaq', 'santris', 'tahunList', 'tahunDipilih'
+    ));
+}
+// InfaqController.php
+public function download($id, $tahun)
+{
+    $santri = Santri::with(['infaq' => function($query) use ($tahun) {
+        $query->whereYear('bulan', $tahun);
+    }])->findOrFail($id);
+
+    $settingInfaq = SettingInfaq::whereYear('bulan', $tahun)->get();
+
+    $bulanUnik = $settingInfaq->pluck('bulan')
+        ->map(fn($bln) => Carbon::parse($bln)->format('Y-m'))
+        ->unique()
+        ->values();
+
+    $settingByBulan = $settingInfaq->keyBy(fn($item) =>
+        Carbon::parse($item->bulan)->format('Y-m')
+    );
+
+    $pdf = Pdf::loadView('infaq.pdf', [
+        'santri' => $santri,
+        'bulanUnik' => $bulanUnik,
+        'settingInfaq' => $settingByBulan,
+        'tahunDipilih' => $tahun
+    ])->setPaper('A4', 'portrait');
+
+    return $pdf->stream('rekap_infaq_'.$santri->nama.'.pdf');
+}
+public function rekapitulasi(Santri $santri, $tahun)
+{
+    $bulanUnik = collect(range(1, 12))->map(function ($bulan) use ($tahun) {
+        return $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
+    });
+
+    $santri->load('infaq'); // eager load
+
+    return view('infaq.rekapitulasi', compact('santri', 'bulanUnik', 'tahun'));
+}
+public function downloadRekapPdf(Santri $santri, $tahun)
+{
+    $bulanUnik = collect(range(1, 12))->map(function ($bulan) use ($tahun) {
+        return $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT);
+    });
+
+    $santri->load('infaq');
+
+    $pdf = Pdf::loadView('infaq.rekapitulasi_pdf', [
+        'santri' => $santri,
+        'bulanUnik' => $bulanUnik,
+        'tahun' => $tahun,
+    ]);
+
+    return $pdf->download("Rekap_Infaq_{$santri->nama}_{$tahun}.pdf");
+}
 }
