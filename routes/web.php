@@ -63,6 +63,7 @@ Route::get('/', [HomeController::class, 'index']); // Halaman publik sebelum log
 
     // Kelola Santri
     Route::resource('/santri', SantriController::class);
+
    
    // Kelola Infaq
 // --- Laporan Infaq (Khusus Ketua) ---
@@ -72,6 +73,7 @@ Route::get('/laporan-infaq/pdf/{tahun}', [LaporanController::class, 'laporanInfa
 // --- Rekap / Export Infaq Per Santri ---
 Route::get('/infaq/download/{santri}/{tahun}', [InfaqController::class, 'download'])->name('infaq.download');
 Route::get('/infaq/rekapitulasi/{santri}/{tahun}', [InfaqController::class, 'rekapitulasi'])->name('infaq.download');
+Route::get('/infaq/download/{santri}/{tahun}', [InfaqController::class, 'downloadRekapPdf'])->name('infaq.download.pdf');
 
 
 
@@ -100,13 +102,20 @@ Route::get('/infaq/list/{bulan}', [InfaqController::class, 'showList'])->name('i
 
 
     // Kelola Santri
-    Route::get('/laporan-santri', [DataSantriController::class, 'laporan'])->name('santri.laporan');
+    Route::middleware('auth')->group(function () {
     
+    // Tampilkan halaman laporan santri (view blade biasa)
+    Route::get('/laporan-santri', [DataSantriController::class, 'laporan'])->name('santri.laporan');
+});
+
+
+
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::get('/laporan/kas', [LaporanController::class, 'kas'])->name('laporan.kas');
     Route::get('/laporan/kas/cetak', [LaporanController::class, 'cetakKas'])->name('laporan.kas.cetak');
-    
+    Route::get('/laporan-santri-pdf', [LaporanController::class, 'exportPDF'])->name('santri.download.pdf');
+
     Route::middleware('auth')->group(function () {
 
     // ==== Rute Profil Bendahara ====

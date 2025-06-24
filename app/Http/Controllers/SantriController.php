@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Santri;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SantriController extends Controller
 {
@@ -77,4 +78,11 @@ class SantriController extends Controller
 
         return redirect()->route('santri.index')->with('success', 'Santri berhasil dihapus');
     }
+
+public function show($id)
+{
+    $santri = Santri::findOrFail($id); // ambil data santri berdasarkan id
+    return view('santri.show', compact('santri')); // pastikan kamu punya view ini
+}
+
 }

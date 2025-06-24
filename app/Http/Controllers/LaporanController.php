@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Infaq;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Santri;
 class LaporanController extends Controller
 {
     public function index()
@@ -87,5 +88,11 @@ public function laporanInfaqPdf($tahun)
 
     $pdf = Pdf::loadView('laporan.infaq_pdf', compact('tahun', 'infaqPerBulan', 'totalKeseluruhan', 'bulanNama'));
     return $pdf->stream("laporan-infaq-$tahun.pdf");
+}
+public function exportPDF()
+{
+    $santris = Santri::all(); // Atau filter sesuai kebutuhan
+    $pdf = Pdf::loadView('laporan.santri_pdf', compact('santris'))->setPaper('A4', 'portrait');
+    return $pdf->download('Laporan_Santri_TPQ_ASAAFA.pdf');
 }
 }

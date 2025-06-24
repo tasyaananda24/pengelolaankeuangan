@@ -5,78 +5,78 @@
 @section('content')
 <div class="container mt-4">
     <div class="text-center mb-4">
-        <h4 class="fw-bold" style="font-size: 32px;">Laporan Data Santri</h4>
-        <h5 class="fw-semibold" style="font-size: 24px;">TPQ ASAAFA</h5>
+        <h4 class="fw-bold" style="font-size: 32px; border-bottom: 3px solid #007bff; display: inline-block; padding-bottom: 6px;">
+            Laporan Data Santri
+        </h4>
+        <h5 class="fw-semibold mt-2" style="font-size: 24px;">TPQ ASAAFA</h5>
         <p style="font-size: 18px;">Tanggal Cetak: {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
     </div>
 
-    <!-- Search Input + Button -->
-    <div class="input-group mb-3 no-print" style="max-width: 450px; margin-left: auto; margin-right: auto;">
-        <input
-            type="text"
-            id="searchInput"
-            placeholder="Cari data santri atau status..."
-            class="form-control"
-            style="font-size: 18px; padding: 14px 20px; border-radius: 30px 0 0 30px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); border-right: none;"
-        >
-        <button
-            class="btn btn-primary"
-            id="searchBtn"
-            style="font-size: 18px; padding: 14px 30px; border-radius: 0 30px 30px 0; box-shadow: 0 3px 10px rgba(0,123,255,0.4); border-left: none;"
-        >
-            Cari
-        </button>
+    <!-- Tombol Unduh PDF -->
+    <div class="text-end mb-4 no-print">
+        <a href="{{ route('santri.download.pdf') }}" class="btn btn-success shadow-sm" style="border-radius: 30px; font-size: 16px; padding: 12px 25px;">
+            <i class="fas fa-file-pdf me-2"></i> Unduh PDF
+        </a>
     </div>
 
-    <table
-        class="table table-bordered"
-        id="santriTable"
-        style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-size: 18px;"
-    >
-        <thead class="thead-light" style="background-color: #007bff; color: white;">
-            <tr>
-                <th style="padding: 20px 25px;">No</th>
-                <th style="padding: 20px 25px;">Nama</th>
-                <th style="padding: 20px 25px;">Tempat, Tanggal Lahir</th>
-                <th style="padding: 20px 25px;">Alamat</th>
-                <th style="padding: 20px 25px;">Nama Orang Tua</th>
-                <th style="padding: 20px 25px;">No. HP</th>
-                <th style="padding: 20px 25px;">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($santris as $index => $santri)
-                <tr style="{{ $index % 2 == 0 ? 'background-color:#f9f9f9' : 'background-color:#ffffff' }}; cursor: default;">
-                    <td style="padding: 20px 25px;">{{ $index + 1 }}</td>
-                    <td style="padding: 20px 25px;">{{ $santri->nama }}</td>
-                    <td style="padding: 20px 25px;">{{ $santri->tempat_lahir }}, {{ \Carbon\Carbon::parse($santri->tanggal_lahir)->translatedFormat('d F Y') }}</td>
-                    <td style="padding: 20px 25px;">{{ $santri->alamat }}</td>
-                    <td style="padding: 20px 25px;">{{ $santri->nama_ortu }}</td>
-                    <td style="padding: 20px 25px;">{{ $santri->no_hp }}</td>
-                    <td style="padding: 20px 25px;">
-                        @if(strtolower($santri->status) === 'aktif')
-                            <span class="badge badge-status-aktif">{{ $santri->status }}</span>
-                        @else
-                            <span class="badge badge-status-tidakaktif">{{ $santri->status }}</span>
-                        @endif
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="text-center" style="font-size: 18px; padding: 20px;">Belum ada data santri.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+    <!-- Search -->
+    <div class="no-print d-flex justify-content-center mb-4">
+        <div class="input-group" style="max-width: 500px; border-radius: 30px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Cari nama, status, alamat..."
+                class="form-control"
+                style="border: none; padding: 14px 20px; font-size: 16px;"
+            >
+            <button
+                class="btn btn-primary"
+                id="searchBtn"
+                style="border: none; font-size: 16px; padding: 14px 25px;"
+            >
+                Cari
+            </button>
+        </div>
+    </div>
 
-    <div class="text-center no-print mt-4">
-        <button
-            class="btn btn-primary btn-lg"
-            onclick="window.print()"
-            style="font-size: 20px; padding: 14px 40px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,123,255,0.4); transition: background-color 0.3s ease, box-shadow 0.3s ease;"
-        >
-            Cetak Laporan
-        </button>
+    <!-- Tabel Santri -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="santriTable" style="font-size: 17px;">
+            <thead class="thead-light" style="background-color: #007bff; color: white;">
+                <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>Tempat, Tanggal Lahir</th>
+                    <th>Alamat</th>
+                    <th>Nama Orang Tua</th>
+                    <th>No. HP</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($santris as $index => $santri)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $santri->nama }}</td>
+                        <td>{{ $santri->tempat_lahir }}, {{ \Carbon\Carbon::parse($santri->tanggal_lahir)->translatedFormat('d F Y') }}</td>
+                        <td>{{ $santri->alamat }}</td>
+                        <td>{{ $santri->nama_ortu }}</td>
+                        <td>{{ $santri->no_hp }}</td>
+                        <td>
+                            @if(strtolower($santri->status) === 'aktif')
+                                <span class="badge badge-success px-3 py-2 rounded-pill shadow">Aktif</span>
+                            @else
+                                <span class="badge badge-secondary px-3 py-2 rounded-pill shadow">Tidak Aktif</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Belum ada data santri.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 @endsection
@@ -89,44 +89,34 @@
         }
     }
 
-    tbody tr:hover {
-        background-color: #d0e5ff !important;
-    }
-
-    .badge-status-aktif {
+    .badge-success {
         background-color: #28a745;
-        color: white;
-        font-weight: 700;
-        font-size: 16px;
-        padding: 8px 20px;
-        box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
-        border-radius: 12px;
+        color: #fff;
+        font-weight: 600;
     }
 
-    .badge-status-tidakaktif {
+    .badge-secondary {
         background-color: #6c757d;
-        color: white;
-        font-weight: 700;
-        font-size: 16px;
-        padding: 8px 20px;
-        box-shadow: 0 0 8px rgba(108, 117, 125, 0.6);
-        border-radius: 12px;
+        color: #fff;
+        font-weight: 600;
     }
 
-    @media (max-width: 768px) {
+    tbody tr:hover {
+        background-color: #f1f9ff !important;
+    }
+
+    @media (max-width: 576px) {
         #searchInput {
-            font-size: 16px !important;
-            padding: 12px 16px !important;
+            font-size: 14px !important;
+        }
+
+        #searchBtn {
+            font-size: 14px !important;
+            padding: 12px 20px !important;
         }
 
         table th, table td {
-            font-size: 16px !important;
-            padding: 14px 18px !important;
-        }
-
-        .btn-primary.btn-lg {
-            font-size: 18px !important;
-            padding: 12px 30px !important;
+            font-size: 15px !important;
         }
     }
 </style>
@@ -139,16 +129,10 @@
         const filter = input.value.toLowerCase();
         const table = document.getElementById("santriTable");
         const trs = table.querySelectorAll("tbody tr");
-        let visibleRows = 0;
 
         trs.forEach(row => {
             if (row.children.length === 1 && row.children[0].getAttribute('colspan') == '7') {
-                if (filter === '') {
-                    row.style.display = '';
-                    visibleRows++;
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = (filter === '') ? '' : 'none';
                 return;
             }
 
@@ -157,21 +141,13 @@
                 rowText += td.textContent.toLowerCase() + ' ';
             });
 
-            if (rowText.indexOf(filter) > -1) {
-                row.style.display = '';
-                visibleRows++;
-            } else {
-                row.style.display = 'none';
-            }
+            row.style.display = (rowText.includes(filter)) ? '' : 'none';
         });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const input = document.getElementById("searchInput");
-        const button = document.getElementById("searchBtn");
-
-        input.addEventListener('keyup', filterTable);
-        button.addEventListener('click', filterTable);
+        document.getElementById("searchInput").addEventListener('keyup', filterTable);
+        document.getElementById("searchBtn").addEventListener('click', filterTable);
     });
 </script>
 @endpush

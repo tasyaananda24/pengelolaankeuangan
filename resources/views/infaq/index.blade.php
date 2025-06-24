@@ -172,43 +172,52 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($santris as $santri)
-                        <tr>
-                            <td>{{ $santri->nama }}</td>
-                            @foreach($bulanUnik as $blnKey)
-                                @php
-                                    $pembayaran = $santri->infaq->firstWhere('bulan', $blnKey);
-                                    $bulanFormatted = \Carbon\Carbon::createFromFormat('Y-m', $blnKey)->translatedFormat('F Y');
-                                @endphp
-                                <td class="text-center">
-                                    @if($pembayaran)
-                                        <span class="badge bg-success">Sudah Bayar</span><br>
-                                        <small>{{ \Carbon\Carbon::parse($pembayaran->tanggal)->format('d M Y') }}</small>
-                                        <form action="{{ route('infaq.batal', $pembayaran->id) }}" method="POST" class="mt-1">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button class="btn btn-sm btn-outline-secondary" onclick="return confirm('Batalkan pembayaran ini?')">Batal</button>
-                                        </form>
-                                    @else
-                                        <form action="{{ route('infaq.bayar', $santri->id) }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="bulan" value="{{ $blnKey }}">
-                                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Tandai sudah bayar untuk {{ $santri->nama }} bulan {{ $bulanFormatted }}?')">Belum Bayar</button>
-                                        </form>
-                                    @endif
-                                </td>
-                            @endforeach
-                            <td class="text-center">
-                                <a href="{{ route('infaq.download', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-warning mb-1">
-                                    <i class="fas fa-table"></i> Detail
-                                </a><br>
-                                <a href="{{ route('infaq.download.pdf', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-danger">
-                                    <i class="fas fa-file-pdf"></i> PDF
-                                </a>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
+    @foreach($santris as $santri)
+        <tr>
+            <td>{{ $santri->nama }}</td>
+
+            @foreach($bulanUnik as $blnKey)
+                @php
+                    $pembayaran = $santri->infaq->firstWhere('bulan', $blnKey);
+                    $bulanFormatted = \Carbon\Carbon::createFromFormat('Y-m', $blnKey)->translatedFormat('F Y');
+                    $bulanDatetime = \Carbon\Carbon::createFromFormat('Y-m', $blnKey)->startOfMonth();
+                    $tanggalDaftar = \Carbon\Carbon::parse($santri->created_at)->startOfMonth();
+                @endphp
+
+                <td class="text-center">
+                    @if($bulanDatetime < $tanggalDaftar)
+                        <span class="text-muted"><em>Tidak Wajib</em></span>
+                    @elseif($pembayaran)
+                        <span class="badge bg-success">Sudah Bayar</span><br>
+                        <small>{{ \Carbon\Carbon::parse($pembayaran->tanggal)->format('d M Y') }}</small>
+                        <form action="{{ route('infaq.batal', $pembayaran->id) }}" method="POST" class="mt-1">
+                            @csrf
+                            @method('PATCH')
+                            <button class="btn btn-sm btn-outline-secondary" onclick="return confirm('Batalkan pembayaran ini?')">Batal</button>
+                        </form>
+                    @else
+                        <form action="{{ route('infaq.bayar', $santri->id) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="bulan" value="{{ $blnKey }}">
+                            <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Tandai sudah bayar untuk {{ $santri->nama }} bulan {{ $bulanFormatted }}?')">Belum Bayar</button>
+                        </form>
+                    @endif
+                </td>
+            @endforeach
+
+            <td class="text-center">
+                <a href="{{ route('infaq.download', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-warning mb-1">
+                    <i class="fas fa-table"></i> Detail
+                </a><br>
+                <a href="{{ route('infaq.download.pdf', ['santri' => $santri->id, 'tahun' => $tahunDipilih]) }}" target="_blank" class="btn btn-sm btn-danger">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            </td>
+        </tr>
+    @endforeach
+</tbody>
+
+                 
             </table>
         </div>
     </div>

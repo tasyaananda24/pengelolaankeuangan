@@ -224,7 +224,7 @@ function showDetail(santriId, nama) {
                         <td>${item.keterangan ?? '-'}</td>
                         <td>
                             <button class="btn btn-warning btn-sm" onclick="editTransaksi(${item.id})">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="hapusTransaksi(${item.id})">Hapus</button>
+                          
                         </td>
                     </tr>`;
                 $('#detailTable tbody').append(row);
@@ -274,25 +274,9 @@ $('#editTransaksiForm').submit(function(e) {
     });
 });
 
-function hapusTransaksi(id) {
-    if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-        $.ajax({
-            url: `/tabungan/hapus/${id}`,
-            type: 'DELETE',
-            success: function(res) {
-                if (res.success) {
-                    alert('Transaksi berhasil dihapus');
-                    location.reload();
-                } else {
-                    alert('Gagal menghapus transaksi');
-                }
-            },
-            error: function() {
-                alert('Terjadi kesalahan saat menghapus transaksi');
-            }
-        });
-    }
-}
+
+    
+
 
 // Fallback jika tombol close tidak berfungsi
 $(document).on('click', '#detailTabunganModal .close', function () {

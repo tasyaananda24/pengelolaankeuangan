@@ -9,22 +9,9 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f9fbf9;
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
       overflow-x: hidden;
-    }
-
-    .navbar {
-      background-color: #2e7d5c;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .navbar-brand, .nav-link {
-      color: #fff !important;
-      font-weight: 600;
-    }
-
-    .nav-link:hover {
-      text-decoration: underline;
+      color: #1e3a34;
     }
 
     .hero-section {
@@ -33,7 +20,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 100px 10% 60px;
-      background: linear-gradient(to right, #e3f2ef, #c7e1d8);
+      background: linear-gradient(to right, #d1fae5, #bbf7d0);
+      border-radius: 0 0 60px 60px;
     }
 
     .hero-text {
@@ -42,15 +30,15 @@
     }
 
     .hero-text h1 {
-      font-size: 3rem;
-      color: #2e7d5c;
+      font-size: 3.2rem;
+      color: #065f46;
       font-weight: 700;
     }
 
     .hero-text p {
-      font-size: 1.2rem;
-      color: #486c5a;
-      margin-top: 10px;
+      font-size: 1.1rem;
+      color: #1e3a34;
+      margin-top: 15px;
     }
 
     .hero-image img {
@@ -70,42 +58,37 @@
     }
 
     .btn-custom {
-      background-color: #2e7d5c;
+      background-color: #047857;
       border: none;
       color: white;
+      padding: 12px 30px;
+      font-size: 1rem;
+      border-radius: 30px;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .btn-custom:hover {
-      background-color: #25644b;
+      background-color: #065f46;
       transform: scale(1.05);
     }
 
-    .info-section, .contact-info {
-      background-color: #f1f8f4;
+    .info-section {
+      background-color: #f0fdf4;
+      padding: 80px 10%;
     }
 
-    .info-section h2, .contact-box h5 {
-      color: #2e7d5c;
+    .info-section h2 {
+      color: #047857;
+      font-size: 2.2rem;
+      font-weight: 700;
     }
 
-    .info-section p, .contact-box p {
-      color: #4a6755;
+    .info-section p {
+      color: #1e3a34;
       font-size: 1rem;
-    }
-
-    footer {
-      background-color: #2e7d5c;
-      color: #fff;
-      text-align: center;
-      padding: 20px 0;
-    }
-
-    .contact-box {
-      padding: 25px;
-      border-radius: 15px;
-      background-color: #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-top: 15px;
+      line-height: 1.7;
     }
 
     .overlay, .login-box {
@@ -154,29 +137,23 @@
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg py-3">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">TPQ ASAAFA (YKIA)</a>
-      <div class="collapse navbar-collapse justify-content-end">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="#" onclick="toggleLogin()">Login</a></li>
-          <li class="nav-item"><a class="nav-link" href="#tentang">Tentang</a></li>
-          <li class="nav-item"><a class="nav-link" href="#kontak">Kontak</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-text">
-      <h1>Sistem Informasi Keuangan<br>TPQ ASAAFA</h1>
-      <p>Kelola keuangan, tabungan, dan infaq santri secara digital, akurat, dan transparan.</p>
-      <button class="btn btn-custom mt-4 px-4 py-2" onclick="toggleLogin()">Masuk</button>
+      <h1>Sistem Informasi Keuangan TPQ ASAAFA</h1>
+      <p>Kelola kas, tabungan, dan infaq santri secara digital, aman, dan efisien melalui satu platform terintegrasi.</p>
+      <button class="btn btn-custom mt-4" onclick="toggleLogin()">Masuk Aplikasi</button>
     </div>
     <div class="hero-image">
       <img src="{{ asset('images/masjid2.png') }}" alt="Masjid">
+    </div>
+  </section>
+
+  <!-- Tentang Section -->
+  <section id="tentang" class="info-section text-center">
+    <div class="container">
+      <h2>Apa Itu Sistem Ini?</h2>
+      <p>Sistem ini dirancang untuk membantu pengurus TPQ dalam mencatat dan memantau keuangan secara digital, mulai dari transaksi kas, tabungan santri, hingga pembayaran infaq bulanan. Semua terintegrasi dalam satu sistem berbasis web yang mudah diakses kapan saja.</p>
     </div>
   </section>
 
@@ -198,45 +175,12 @@
         <input type="email" name="email" class="form-control" required autofocus>
       </div>
       <div class="mb-3">
-        <label for="password" class="form-label">Kata Sandi</label>
+        <label for="password" class="form-label">Password</label>
         <input type="password" name="password" class="form-control" required>
       </div>
       <button type="submit" class="btn btn-custom w-100">Login</button>
     </form>
   </div>
-
-  <!-- Tentang Section -->
-  <section id="tentang" class="info-section py-5 text-center">
-    <div class="container">
-      <h2 class="mb-4">Tentang Aplikasi</h2>
-      <p>Aplikasi ini dirancang untuk membantu bendahara TPQ dalam mencatat dan mengelola data keuangan secara digital. Dengan sistem yang terintegrasi, pelaporan keuangan menjadi lebih mudah dan akurat.</p>
-    </div>
-  </section>
-
-  <!-- Kontak Section -->
-  <section id="kontak" class="contact-info py-5">
-    <div class="container">
-      <div class="row text-center">
-        <div class="col-md-6 mb-4">
-          <div class="contact-box">
-            <h5>📍 Lokasi TPQ</h5>
-            <p>Jl. Karya Bakti RT 20 RW 014, Kelurahan Sukamelang, Kecamatan Subang, Kabupaten Subang</p>
-          </div>
-        </div>
-        <div class="col-md-6 mb-4">
-          <div class="contact-box">
-            <h5>📞 Kontak</h5>
-            <p>Email: info@tpqasafa.sch.id<br>Telp: 0812-3456-7890</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer>
-    <p>&copy; 2025 TPQ ASAFA. Seluruh Hak Dilindungi.</p>
-  </footer>
 
   <!-- Script Login -->
   <script>
@@ -249,37 +193,6 @@
       overlay.style.display = isVisible ? 'none' : 'block';
     }
   </script>
-  <!-- ... kode HTML kamu tetap sama ... -->
-
-<!-- Script Login -->
-<script>
-  function toggleLogin() {
-    const loginBox = document.getElementById('loginBox');
-    const overlay = document.getElementById('overlay');
-
-    const isVisible = loginBox.style.display === 'block';
-    loginBox.style.display = isVisible ? 'none' : 'block';
-    overlay.style.display = isVisible ? 'none' : 'block';
-  }
-</script>
-
-<!-- Tambahan untuk alert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-   
-    @if(session('error'))
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal Login',
-        text: '{{ session('error') }}',
-        confirmButtonColor: '#d33'
-      });
-      // Otomatis buka modal login jika gagal
-      toggleLogin();
-    @endif
-  });
-</script>
 
 </body>
 </html>
