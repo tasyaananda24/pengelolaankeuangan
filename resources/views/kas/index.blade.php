@@ -37,7 +37,7 @@
     <div class="row mb-4">
         <div class="col-md-3">
             <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#tambahKreditModal">
-                <i class="fas fa-plus-circle"></i> Tambah Kredit
+                <i class="fas fa-plus-circle"></i> Tambah Pengeluaran
             </button>
         </div>
         <div class="col-md-3">
@@ -173,7 +173,7 @@
                     </div>
                     <div class="form-group">
                         <label>Jumlah</label>
-                        <input type="number" name="jumlah" class="form-control" placeholder="Masukkan nominal" required>
+                       <input type="text" name="jumlah" class="form-control jumlah-input" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -215,10 +215,12 @@
                         <label>Keterangan</label>
                         <input type="text" name="keterangan" class="form-control" required>
                     </div>
-                    <div class="form-group">
-                        <label>Jumlah</label>
-                        <input type="number" name="jumlah" class="form-control" required>
+                  <div class="form-group">
+                    <label>Jumlah</label>
+                     <input type="text" name="jumlah" class="form-control jumlah-input" required>
+
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
@@ -277,7 +279,36 @@
 @endsection
 
 @section('scripts')
+<script>
+    function formatRupiah(angka) {
+        let number_string = angka.replace(/\D/g, ''),
+            sisa = number_string.length % 3,
+            rupiah = number_string.substr(0, sisa),
+            ribuan = number_string.substr(sisa).match(/\d{3}/g);
 
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+
+        return rupiah;
+    }
+
+    document.querySelectorAll('.jumlah-input').forEach(function(input) {
+        input.addEventListener('input', function(e) {
+            this.value = formatRupiah(this.value);
+        });
+    });
+
+    // Saat form disubmit, hapus semua titik sebelum dikirim
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            form.querySelectorAll('.jumlah-input').forEach(function(input) {
+                input.value = input.value.replace(/\./g, '');
+            });
+        });
+    });
+</script>
 @endsection
 
 @section('styles')
@@ -314,4 +345,6 @@
         font-size: 0.85rem;
     }
 </style>
+
+
 @endsection

@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfilekController;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
+ use App\Http\Controllers\DashboardController;
 // Halaman utama (landing page)
 Route::get('/', [HomeController::class, 'index']); // Halaman publik sebelum login
 
@@ -33,6 +34,9 @@ Route::get('/', [HomeController::class, 'index']); // Halaman publik sebelum log
     Route::middleware('auth')->group(function () {
     Route::get('/dashboard/bendahara', [MyhomeController::class, 'index'])->name('bendahara');
     Route::get('/dashboard/ketua', [AdminController::class, 'ketua'])->name('ketua');
+    
+
+
 
     // Halaman utama setelah login (opsional)
     Route::get('/home', [HomeController::class, 'home']);
@@ -57,12 +61,15 @@ Route::get('/', [HomeController::class, 'index']); // Halaman publik sebelum log
     Route::put('/tabungan/edit/{id}', [TabunganController::class, 'edit'])->name('tabungan.edit');
     Route::delete('/tabungan/hapus/{id}', [TabunganController::class, 'hapus'])->name('tabungan.hapus');
     Route::get('/tabungan/transaksi/{id}', [TabunganController::class, 'getTransaksi']);
+    Route::put('/tabungan/transaksi/{id}', [TabunganController::class, 'updateTransaksi']);
     Route::get('/tabungan/cetak/{id}', [TabunganController::class, 'cetak']);
-        Route::get('/tabungan/gambar/{id}', [TabunganController::class, 'generateImage']);
+    Route::get('/tabungan/gambar/{id}', [TabunganController::class, 'generateImage']);
 
 
     // Kelola Santri
+    Route::get('/santri/generate-kode', [SantriController::class, 'generateKode'])->name('santri.generateKode');
     Route::resource('/santri', SantriController::class);
+        
 
    
    // Kelola Infaq

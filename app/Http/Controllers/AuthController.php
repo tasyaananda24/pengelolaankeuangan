@@ -10,7 +10,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         return view('login'); // Sesuaikan dengan nama view login kamu
-    }
+    } 
 
     // Proses login
     public function login(Request $request)

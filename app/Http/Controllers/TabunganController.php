@@ -39,37 +39,54 @@ class TabunganController extends Controller
     }
 
     public function penarikan(Request $request)
-    {
-        // Validasi input
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id',
-            'tanggal' => 'required|date',
-            'jumlah' => 'required|numeric|min:0',
-            'keterangan' => 'required|string|max:255',
-        ]);
+{
+    $request->validate([
+        'santri_id' => 'required|exists:santris,id',
+        'tanggal' => 'required|date',
+        'jumlah' => 'required|numeric|min:1',
+        'keterangan' => 'required|string',
+    ]);
 
-        // Simpan data penarikan
-        $tabungan = new Tabungan();
-        $tabungan->santri_id = $request->santri_id;
-        $tabungan->tanggal = $request->tanggal;
-        $tabungan->jumlah = $request->jumlah;
-        $tabungan->jenis = 'penarikan';
-        $tabungan->keterangan = $request->keterangan;
-        $tabungan->save();
+    $santri = Santri::with('tabungans')->findOrFail($request->santri_id);
+    $setoran = $santri->tabungans->where('jenis', 'setoran')->sum('jumlah');
+    $penarikan = $santri->tabungans->where('jenis', 'penarikan')->sum('jumlah');
+    $saldo = $setoran - $penarikan;
 
-        return redirect()->back()->with('success', 'Penarikan berhasil dilakukan');
+    if ($request->jumlah > $saldo) {
+        return redirect()->back()->with('error', 'Saldo tidak mencukupi untuk penarikan.');
     }
 
-    public function detail($santriId)
-    {
-        $santri = Santri::findOrFail($santriId);
-        $tabungans = $santri->tabungans;
+    Tabungan::create([
+        'santri_id' => $request->santri_id,
+        'tanggal' => $request->tanggal,
+        'jumlah' => $request->jumlah,
+        'jenis' => 'penarikan',
+        'keterangan' => $request->keterangan,
+    ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $tabungans
-        ]);
+    return redirect()->back()->with('success', 'Penarikan berhasil disimpan.');
+}
+
+
+   public function detail($id, Request $request)
+{
+    $bulan = $request->bulan;
+    $tahun = $request->tahun;
+
+    $query = Tabungan::where('santri_id', $id);
+
+    if ($bulan) {
+        $query->whereMonth('tanggal', $bulan);
     }
+    if ($tahun) {
+        $query->whereYear('tanggal', $tahun);
+    }
+
+    $data = $query->orderBy('tanggal')->get();
+
+    return response()->json(['success' => true, 'data' => $data]);
+}
+
 
     public function edit(Request $request, $id)
     {
@@ -118,7 +135,25 @@ class TabunganController extends Controller
         // Mengembalikan PDF yang dihasilkan ke browser
         return $pdf->stream('Laporan_Tabungan_'.$santri->nama.'.pdf');
     }
-    
+    public function updateTransaksi(Request $request, $id)
+{
+    $request->validate([
+        'jumlah' => 'required|numeric|min:1',
+        'keterangan' => 'required|string|max:255',
+    ]);
+
+    $transaksi = Tabungan::find($id);
+    if (!$transaksi) {
+        return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan']);
+    }
+
+    $transaksi->jumlah = $request->jumlah;
+    $transaksi->keterangan = $request->keterangan;
+    $transaksi->save();
+
+    return response()->json(['success' => true, 'message' => 'Berhasil diperbarui']);
+}
+
     
 
 }

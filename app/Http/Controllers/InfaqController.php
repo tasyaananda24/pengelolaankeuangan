@@ -13,215 +13,94 @@ use Carbon\Carbon;
 
 class InfaqController extends Controller
 {
- public function index(Request $request)
-{
-    $search = $request->search;
-    $tahunDipilih = $request->tahun ?? Carbon::now()->year;
-
-    // Ambil data santri + relasi infaq (filtered by tahun)
-    $santris = Santri::query()
-        ->when($search, function ($query, $search) {
-            $query->where('nama', 'like', "%{$search}%");
-        })
-        ->with(['infaq' => function ($query) use ($tahunDipilih) {
-            $query->whereYear('tanggal', $tahunDipilih);
-        }])
-        ->get();
-
-    // Set locale Carbon
-    Carbon::setLocale('id');
-
-    // Buat daftar bulan Y-m (2025-01, 2025-02, dst) untuk tahun terpilih
-    $bulanUnik = collect();
-    $bulanLabel = collect();
-    for ($i = 1; $i <= 12; $i++) {
-        $date = Carbon::createFromDate($tahunDipilih, $i, 1);
-        $bulanUnik->push($date->format('Y-m'));
-        $bulanLabel->push($date->translatedFormat('F Y'));
-    }
-
-    // Jumlah default dari setting
-    $jumlahDefault = SettingInfaq::latest()->value('jumlah') ?? 20000;
-
-    // Daftar tahun untuk dropdown (2025–2040)
-    $tahunList = range(2025, 2040);
-
-    // === Setting Infaq: filter bulan & tahun ===
-    $bulanSetting = $request->bulanSetting;
-    $tahunSetting = $request->tahunSetting;
-
-    $settingInfaqQuery = SettingInfaq::query();
-
-    if ($bulanSetting) {
-        $settingInfaqQuery->whereMonth('bulan', $bulanSetting);
-    }
-
-    if ($tahunSetting) {
-        $settingInfaqQuery->whereYear('bulan', $tahunSetting);
-    }
-
-    // Jika tidak ada filter, tampilkan hanya bulan terbaru
-    if (!$bulanSetting && !$tahunSetting) {
-        $latestBulan = SettingInfaq::max('bulan');
-        if ($latestBulan) {
-            $settingInfaqQuery->where('bulan', $latestBulan);
-        }
-    }
-
-    $settingInfaq = $settingInfaqQuery->orderBy('bulan', 'desc')->get();
-
-    return view('infaq.index', compact(
-        'santris',
-        'bulanUnik',
-        'bulanLabel',
-        'jumlahDefault',
-        'tahunList',
-        'tahunDipilih',
-        'settingInfaq'
-    ));
-}
-
-    public function create()
+    public function index(Request $request)
     {
-        $santris = Santri::all();
-        return view('infaq.create', compact('santris'));
+        $search = $request->search;
+        $tahunDipilih = $request->tahun ?? Carbon::now()->year;
+
+        $santris = Santri::query()
+            ->when($search, function ($query, $search) {
+                $query->where('nama', 'like', "%{$search}%");
+            })
+            ->with(['infaq' => function ($query) use ($tahunDipilih) {
+                $query->whereYear('tanggal', $tahunDipilih);
+            }])
+            ->get();
+
+        Carbon::setLocale('id');
+
+        $bulanUnik = collect();
+        $bulanLabel = collect();
+        for ($i = 1; $i <= 12; $i++) {
+            $date = Carbon::createFromDate($tahunDipilih, $i, 1);
+            $bulanUnik->push($date->format('Y-m'));
+            $bulanLabel->push($date->translatedFormat('F Y'));
+        }
+
+        $jumlahDefault = SettingInfaq::latest()->value('jumlah') ?? 20000;
+        $tahunList = range(2025, 2040);
+
+        $bulanSetting = $request->bulanSetting;
+        $tahunSetting = $request->tahunSetting;
+
+        $settingInfaqQuery = SettingInfaq::query();
+
+        if ($bulanSetting) {
+            $settingInfaqQuery->whereMonth('bulan', $bulanSetting);
+        }
+
+        if ($tahunSetting) {
+            $settingInfaqQuery->whereYear('bulan', $tahunSetting);
+        }
+
+        if (!$bulanSetting && !$tahunSetting) {
+            $latestBulan = SettingInfaq::max('bulan');
+            if ($latestBulan) {
+                $settingInfaqQuery->where('bulan', $latestBulan);
+            }
+        }
+
+        $settingInfaq = $settingInfaqQuery->orderBy('bulan', 'desc')->get();
+
+        // Tambahan: ambil semua bulan yang sudah pernah disetting
+        $bulanSudahDisetting = SettingInfaq::pluck('bulan')
+            ->map(fn($b) => Carbon::parse($b)->format('Y-m'))
+            ->toArray();
+
+        return view('infaq.index', compact(
+            'santris',
+            'bulanUnik',
+            'bulanLabel',
+            'jumlahDefault',
+            'tahunList',
+            'tahunDipilih',
+            'settingInfaq',
+            'bulanSudahDisetting' // <-- dikirim ke blade
+        ));
     }
 
-    public function store(Request $request)
+    public function storeSetting(Request $request)
     {
         $request->validate([
-            'santri_id' => 'required|exists:santris,id',
-            'bulan' => 'required|string',
-            'tanggal' => 'required|date',
-            'jumlah' => 'required|numeric',
-            'keterangan' => 'nullable|string',
+            'bulan' => 'required|date_format:Y-m',
+            'jumlah' => 'required|numeric|min:0',
+            'keterangan' => 'nullable|string|max:255',
         ]);
 
-        // Cegah duplikasi infaq per bulan per santri
-        $existing = Infaq::where('santri_id', $request->santri_id)
-            ->where('bulan', $request->bulan)
-            ->first();
-
+        $existing = SettingInfaq::where('bulan', $request->bulan)->first();
         if ($existing) {
-            return redirect()->back()->with('error', 'Santri ini sudah membayar infaq bulan tersebut.');
+            return redirect()->back()->with('error', 'Setting untuk bulan ini sudah pernah disimpan.');
         }
 
-        $infaq = Infaq::create([
-            'santri_id' => $request->santri_id,
+        SettingInfaq::create([
             'bulan' => $request->bulan,
-            'tanggal' => $request->tanggal,
             'jumlah' => $request->jumlah,
             'keterangan' => $request->keterangan,
         ]);
 
-      TransaksiKas::create([
-    'tanggal' => $request->tanggal,
-    'keterangan' => 'Infaq Santri ID ' . $request->santri_id,
-    'jumlah' => $request->jumlah,
-    'jenis' => 'debit',
-    // <- Tambahkan ini:
-    'jenis_transaksi' => 'infaq',
-]);
-
-
-
-        return redirect()->back()->with('success', 'Data infaq berhasil disimpan.');
+        return redirect()->back()->with('success', 'Setting jumlah infaq berhasil disimpan.');
     }
 
-    public function edit($id)
-    {
-        $infaq = Infaq::findOrFail($id);
-        $santris = Santri::all();
-        return view('infaq.edit', compact('infaq', 'santris'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'santri_id' => 'required|exists:santris,id',
-            'bulan' => 'required|string',
-            'tanggal' => 'required|date',
-            'jumlah' => 'required|numeric',
-            'keterangan' => 'nullable|string',
-        ]);
-
-        $infaq = Infaq::findOrFail($id);
-        $infaq->update($request->all());
-
-        return redirect()->route('infaq.index')->with('success', 'Infaq berhasil diperbarui');
-    }
-
-    public function destroy($id)
-    {
-        $infaq = Infaq::findOrFail($id);
-        $infaq->delete();
-
-        return redirect()->route('infaq.index')->with('success', 'Infaq berhasil dihapus');
-    }
-
-
-    // Fitur untuk menandai infaq sudah dibayar tanpa form manual
-   public function tandaiSudahBayar(Request $request)
-{
-    $request->validate([
-        'santri_id' => 'required|exists:santris,id',
-        'bulan' => 'required|string', // format: 'Y-m'
-    ]);
-
-    $tanggal = Carbon::createFromFormat('Y-m', $request->bulan)->startOfMonth();
-    $jumlah = SettingInfaq::where('bulan', $request->bulan)->value('jumlah') ?? 20000;
-
-    $exists = Infaq::where('santri_id', $request->santri_id)
-        ->where('bulan', $request->bulan)
-        ->exists();
-
-    if ($exists) {
-        return response()->json(['message' => 'Sudah tercatat.'], 409);
-    }
-
-    Infaq::create([
-        'santri_id' => $request->santri_id,
-        'bulan' => $request->bulan,
-        'tanggal' => $tanggal->toDateString(),
-        'jumlah' => $jumlah,
-        'keterangan' => 'Ditandai manual oleh bendahara',
-    ]);
-
-    TransaksiKas::create([
-        'tanggal' => $tanggal->toDateString(), // ✅ pastikan ini terisi
-        'keterangan' => 'Infaq dari Santri ID ' . $request->santri_id,
-        'jumlah' => $jumlah,
-        'jenis' => 'debit',
-        'jenis_transaksi' => 'infaq',
-    ]);
-
-    return response()->json(['message' => 'Infaq berhasil ditandai.']);
-}
-
-    // use App\Models\SettingInfaq; pastikan ini ada di atas jika belum
-
-public function storeSetting(Request $request)
-{
-    $request->validate([
-        'bulan' => 'required|date_format:Y-m',
-        'jumlah' => 'required|numeric|min:0',
-        'keterangan' => 'nullable|string|max:255',
-    ]);
-
-    // Cek apakah setting untuk bulan ini sudah ada
-    $existing = SettingInfaq::where('bulan', $request->bulan)->first();
-    if ($existing) {
-        return redirect()->back()->with('success', 'Setting untuk bulan ini sudah pernah disimpan.');
-    }
-
-    SettingInfaq::create([
-        'bulan' => $request->bulan,
-        'jumlah' => $request->jumlah,
-        'keterangan' => $request->keterangan,
-    ]);
-
-    return redirect()->back()->with('success', 'Setting jumlah infaq berhasil disimpan.');
-}
 public function bayarInfaq(Request $request, $santri_id)
 {
     $request->validate([

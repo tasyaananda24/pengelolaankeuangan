@@ -48,23 +48,47 @@
 <div class="collapse card shadow-sm mb-4" id="form-setting-infaq">
     <div class="card-header bg-light"><strong>Form Setting Infaq Bulanan</strong></div>
     <div class="card-body">
+
+        @php
+            // Ambil semua bulan yang sudah disetting
+            $bulanTerpakai = $settingInfaq->map(fn($item) => \Carbon\Carbon::parse($item->bulan)->format('Y-m'))->toArray();
+
+            // Cari bulan paling akhir yang sudah disetting untuk jadi batas minimum
+            $minBulan = count($bulanTerpakai) > 0 ? max($bulanTerpakai) : null;
+
+            // Bulan maksimal adalah akhir tahun ini (Desember)
+         $maxBulan = '2040-12';
+
+        @endphp
+
         <form action="{{ route('infaq.setting.store') }}" method="POST" class="row" id="formSettingInfaq">
             @csrf
             <div class="form-group col-md-4">
                 <label for="bulan">Bulan & Tahun</label>
-                <input type="month" id="bulan" name="bulan" class="form-control" required>
+                <input
+                    type="month"
+                    id="bulan"
+                    name="bulan"
+                    class="form-control"
+                    required
+                    @if($minBulan) min="{{ $minBulan }}" @endif
+                    max="{{ $maxBulan }}"
+                >
                 <div id="errorBulan" class="invalid-feedback" style="display:none;">
                     Bulan ini sudah pernah disetting. Silakan pilih bulan lain.
                 </div>
             </div>
+
             <div class="form-group col-md-4">
-                <label>Jumlah</label>
+                <label>Nominal Bayar</label>
                 <input type="number" name="jumlah" class="form-control" required>
             </div>
+
             <div class="form-group col-md-4">
                 <label>Keterangan</label>
                 <input type="text" name="keterangan" class="form-control">
             </div>
+
             <div class="form-group col-12">
                 <button type="submit" class="btn btn-primary" id="btnSubmit">Simpan Setting</button>
             </div>
@@ -72,10 +96,7 @@
     </div>
 </div>
 
-@php
-    $bulanTerpakai = $settingInfaq->map(fn($item) => \Carbon\Carbon::parse($item->bulan)->format('Y-m'))->toArray();
-@endphp
-
+{{-- JavaScript untuk validasi jika user memilih bulan yang sudah pernah disetting --}}
 <script>
     const bulanTerpakai = @json($bulanTerpakai);
     const inputBulan = document.getElementById('bulan');
@@ -83,7 +104,7 @@
     const btnSubmit = document.getElementById('btnSubmit');
 
     inputBulan.addEventListener('input', function () {
-        const val = this.value;
+        const val = this.value.substring(0, 7); // Ambil format YYYY-MM saja
         if (bulanTerpakai.includes(val)) {
             this.classList.add('is-invalid');
             errorBulan.style.display = 'block';
@@ -95,65 +116,34 @@
         }
     });
 </script>
+        <div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="mb-3 text-success">Jumlah Bayar Infaq</h5>
 
-{{-- Script validasi bulan tidak ganda --}}
-<script>
-    const bulanTerpakai = @json($bulanTerpakai);
-    const inputBulan = document.getElementById('bulan');
-    const errorBulan = document.getElementById('errorBulan');
-    const btnSubmit = document.getElementById('btnSubmit');
-
-    inputBulan.addEventListener('input', function () {
-        const val = this.value;
-        if (bulanTerpakai.includes(val)) {
-            this.classList.add('is-invalid');
-            errorBulan.style.display = 'block';
-            btnSubmit.disabled = true;
-        } else {
-            this.classList.remove('is-invalid');
-            errorBulan.style.display = 'none';
-            btnSubmit.disabled = false;
-        }
-    });
-</script>
-
-
-    {{-- Tabel Setting Infaq --}}
-    @if($settingInfaq && $settingInfaq->count())
-        <div class="mb-4">
-            <h5 class="mb-3">Jumlah Bayar Infaq</h5>
-            <div class="row g-3">
-                @foreach($settingInfaq as $setting)
-                    <div class="col-md-4">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body d-flex flex-column justify-content-between">
-                                <div>
-                                    <h6 class="card-title mb-1">
-                                        {{ \Carbon\Carbon::parse($setting->bulan)->translatedFormat('F Y') }}
-                                    </h6>
-                                    <p class="card-text mb-1">
-                                        <strong>Jumlah:</strong> Rp {{ number_format($setting->jumlah, 0, ',', '.') }}
-                                    </p>
-                                    <p class="card-text text-muted mb-2">
-                                        <small>{{ $setting->keterangan ?? 'Tidak ada keterangan' }}</small>
-                                    </p>
-                                </div>
-                                <div class="text-end">
-                                    <form action="{{ route('infaq.setting.destroy', $setting->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus setting bulan ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger" type="submit">
-                                            <i class="fas fa-trash"></i> Hapus
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+        @forelse($settingInfaq as $setting)
+            <div class="d-flex justify-content-between align-items-start flex-wrap py-2 border-bottom">
+                <div class="me-3">
+                    <div class="fw-bold">
+                        {{ \Carbon\Carbon::parse($setting->bulan)->translatedFormat('F Y') }}
                     </div>
-                @endforeach
+                    <div>Jumlah: <strong>Rp {{ number_format($setting->jumlah, 0, ',', '.') }}</strong></div>
+                    <div class="text-muted"><small>{{ $setting->keterangan ?? 'Tidak ada keterangan' }}</small></div>
+                </div>
+                <form action="{{ route('infaq.setting.destroy', $setting->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus setting bulan ini?')">
+                    @csrf
+                    @method('DELETE')
+                    <button class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </form>
             </div>
-        </div>
-    @endif
+        @empty
+            <p class="text-muted">Belum ada data setting infaq.</p>
+        @endforelse
+    </div>
+</div>
+
+    
 
     {{-- Tabel Rekapitulasi --}}
     <div class="card shadow-sm">

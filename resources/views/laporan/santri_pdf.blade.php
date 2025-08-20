@@ -10,16 +10,15 @@
             margin: 20px;
         }
 
-        h2, h4 {
+        .header {
             text-align: center;
-            margin: 0;
-            padding: 2px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        p {
-            text-align: center;
-            margin-top: 5px;
-            margin-bottom: 15px;
+        .header p {
+            margin: 2px 0;
             font-size: 11px;
         }
 
@@ -63,9 +62,14 @@
 </head>
 <body>
 
-    <h2>LAPORAN DATA SANTRI</h2>
-    <h4>TPQ ASAAFA</h4>
-    <p>Tanggal Cetak: {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
+    <div class="header">
+        <p><strong>YAYASAN KESEJAHTERAAN ISLAM ASAAFA</strong></p>
+        <p><strong>TPQ ASAAFA</strong></p>
+        <p>Kep Menhumham No AHU-0016323.AH.01.04</p>
+        <p>Jln Karya Bhakti no.01 RT 20 RW 14 Sukamelang, Subang</p>
+    </div>
+
+    <p class="text-center">Tanggal Cetak: {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
 
     <table>
         <thead>
@@ -84,7 +88,10 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $santri->nama }}</td>
-                    <td>{{ $santri->tempat_lahir }}, {{ \Carbon\Carbon::parse($santri->tanggal_lahir)->translatedFormat('d F Y') }}</td>
+                    <td>
+                        {{ $santri->tempat_lahir }},
+                        {{ \Carbon\Carbon::parse($santri->tanggal_lahir)->translatedFormat('d F Y') }}
+                    </td>
                     <td>{{ $santri->alamat }}</td>
                     <td>{{ $santri->nama_ortu }}</td>
                     <td>{{ $santri->no_hp }}</td>

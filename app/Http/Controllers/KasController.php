@@ -59,6 +59,7 @@ class KasController extends Controller
         'transaksi' => $transaksiGrouped,
         'request' => $request, // supaya bisa akses data di blade
     ]);
+    
 }
 
         public function storeKredit(Request $request)
@@ -192,7 +193,7 @@ public function export(Request $request)
 
     $namaBulan = \Carbon\Carbon::createFromDate(null, $bulan, 1)->translatedFormat('F');
 
-    return $pdf->download("Laporan-Kas-{$namaBulan}-{$tahun}.pdf");
+    return $pdf->stream("Laporan-Kas-{$namaBulan}-{$tahun}.pdf");
 }
 
 

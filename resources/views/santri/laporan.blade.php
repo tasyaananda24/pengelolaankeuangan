@@ -5,6 +5,7 @@
 @section('content')
 <div class="container mt-4">
     <div class="text-center mb-4">
+        
         <h4 class="fw-bold" style="font-size: 32px; border-bottom: 3px solid #007bff; display: inline-block; padding-bottom: 6px;">
             Laporan Data Santri
         </h4>

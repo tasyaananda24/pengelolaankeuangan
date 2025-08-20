@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+
 use App\Models\Infaq;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Santri;
@@ -12,7 +11,7 @@ class LaporanController extends Controller
 {
     public function index()
     {
-        return view('laporan.index');
+        return view ('laporan.index');
     }
 
     public function kas(Request $request)

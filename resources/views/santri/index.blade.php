@@ -41,6 +41,7 @@
                     <thead class="thead-light">
                         <tr>
                             <th>No</th>
+                            <th>Kode</th>
                             <th>Nama</th>
                             <th>Tempat, Tanggal Lahir</th>
                             <th>Alamat</th>
@@ -54,6 +55,7 @@
                         @foreach($santris as $index => $santri)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
+                                <td>{{ $santri->kode_santri }}</td>
                                 <td>{{ $santri->nama }}</td>
                                 <td>{{ $santri->tempat_lahir }}, {{ \Carbon\Carbon::parse($santri->tanggal_lahir)->translatedFormat('d F Y') }}</td>
                                 <td>{{ $santri->alamat }}</td>
@@ -70,13 +72,12 @@
                                         onclick="isiFormEdit({{ $santri }})">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                
                                 </td>
                             </tr>
                         @endforeach
 
                         @if($santris->isEmpty())
-                            <tr><td colspan="8" class="text-center">Belum ada data santri.</td></tr>
+                            <tr><td colspan="9" class="text-center">Belum ada data santri.</td></tr>
                         @endif
                     </tbody>
                 </table>
@@ -98,23 +99,26 @@
         $('#dataTable').DataTable({
             searching: false,
             lengthChange: false,
-            paging: false, // opsional jika pagination tidak diperlukan
+            paging: false,
             info: false
         });
     });
 
-    function isiFormEdit(santri) {
-        $('#edit_id').val(santri.id);
-        $('#edit_nama').val(santri.nama);
-        $('#edit_tempat_lahir').val(santri.tempat_lahir);
-        $('#edit_tanggal_lahir').val(santri.tanggal_lahir);
-        $('#edit_alamat').val(santri.alamat);
-        $('#edit_nama_ortu').val(santri.nama_ortu);
-        $('#edit_no_hp').val(santri.no_hp);
-        $('#edit_status').val(santri.status);
-        $('#formEditSantri').attr('action', '/santri/' + santri.id);
-        $('#editSantriModal').modal('show');
-    }
+  function isiFormEdit(santri) {
+    $('#edit_id').val(santri.id);
+    $('#edit_kode_santri').val(santri.kode_santri); // ← tambahkan ini
+    $('#edit_nama').val(santri.nama);
+    $('#edit_tempat_lahir').val(santri.tempat_lahir);
+    $('#edit_tanggal_lahir').val(santri.tanggal_lahir);
+    $('#edit_alamat').val(santri.alamat);
+    $('#edit_nama_ortu').val(santri.nama_ortu);
+    $('#edit_no_hp').val(santri.no_hp);
+    $('#edit_status').val(santri.status); // pastikan ini 'Aktif' atau 'Tidak Aktif'
+
+    $('#formEditSantri').attr('action', '/santri/' + santri.id);
+    $('#editSantriModal').modal('show');
+}
+
 
     function filterSantri() {
         const status = $('#filterStatus').val();
@@ -122,7 +126,5 @@
         url.searchParams.set('status', status);
         window.location.href = url.toString();
     }
-
-    
 </script>
 @endsection

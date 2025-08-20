@@ -270,6 +270,6 @@
     <script src="{{ asset('vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
 
     @yield('scripts')
-
+    @stack('scripts')
 </body>
 </html>

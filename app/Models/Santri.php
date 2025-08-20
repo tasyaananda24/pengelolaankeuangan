@@ -8,6 +8,7 @@ class Santri extends Model
 {
     use HasFactory;
         protected $fillable = [
+        'kode_santri',
         'nama',
         'tempat_lahir',
         'tanggal_lahir',

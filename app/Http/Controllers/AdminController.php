@@ -2,72 +2,119 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TransaksiKas;
-use App\Models\Infaq;
-use App\Models\Santri;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
+use App\Models\Santri;
+use App\Models\Infaq;
+use Illuminate\Support\Facades\DB;
+use App\Models\Tabungan;
+use App\Models\TransaksiKas;
 
 class AdminController extends Controller
 {
-    /**
-     * Menampilkan dashboard untuk bendahara
-     */
-    public function index()
-    {
-        $data = $this->getDashboardData();
-
-        return view('dashboard.bendahara', $data);
-    }
-
-    /**
-     * Menampilkan dashboard untuk ketua yayasan
-     */
-    public function ketua()
-    {
-        $data = $this->getDashboardData();
-
-        return view('dashboard.ketua', $data);
-    }
-
-    /**
-     * Menampilkan halaman admin umum
-     */
-    public function admin()
-    {
-        return view('admin');
-    }
-
-    /**
-     * Fungsi privat untuk mengambil data kas dan infaq bulan ini
-     */
-  private function getDashboardData()
+   public function ketua()
 {
-    $now = Carbon::now();
+    $bulanIni = now()->month;
+    $tahunIni = now()->year;
 
-    $totalKas = TransaksiKas::selectRaw("
-        SUM(CASE WHEN jenis = 'debit' THEN jumlah ELSE 0 END) -
-        SUM(CASE WHEN jenis = 'kredit' THEN jumlah ELSE 0 END)
-    AS saldo")->value('saldo') ?? 0;
-
-    $totalDebitKas = TransaksiKas::where('jenis', 'debit')->sum('jumlah') ?? 0;
-    $totalKreditKas = TransaksiKas::where('jenis', 'kredit')->sum('jumlah') ?? 0;
-
-    $totalInfaqBulanIni = Infaq::whereYear('tanggal', $now->year)
-        ->whereMonth('tanggal', $now->month)
-        ->sum('jumlah');
-
+  $totalSantri = Santri::count();
     $totalSantriAktif = Santri::where('status', 'aktif')->count();
-    $totalSantriTidakAktif = Santri::where('status', 'tidak aktif')->count();
+    $totalSantriTidakAktif = Santri::where('status', '!=', 'aktif')->count(); // ✅ tambahkan ini
 
-    return [
-        'totalKas' => $totalKas,
-        'totalDebitKas' => $totalDebitKas,
-        'totalKreditKas' => $totalKreditKas,
-        'totalInfaqBulanIni' => $totalInfaqBulanIni,
-        'totalSantriAktif' => $totalSantriAktif,
-        'totalSantriTidakAktif' => $totalSantriTidakAktif,
-    ];
+
+    $totalInfaqBulanIni = Infaq::whereMonth('tanggal', $bulanIni)
+                                ->whereYear('tanggal', $tahunIni)
+                                ->sum('jumlah');
+
+    $bulanLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    // === INFAQ ===
+    $infaqBulanan = Infaq::selectRaw("MONTH(tanggal) as bulan, SUM(jumlah) as total")
+        ->whereYear('tanggal', $tahunIni)
+        ->groupByRaw("MONTH(tanggal)")
+        ->get()
+        ->keyBy('bulan');
+
+    $infaqData = [];
+    for ($i = 1; $i <= 12; $i++) {
+        $infaqData[] = $infaqBulanan[$i]->total ?? 0;
+    }
+
+    // === TABUNGAN ===
+    $tabunganBulanan = Tabungan::selectRaw("MONTH(tanggal) as bulan, SUM(CASE WHEN jenis = 'setoran' THEN jumlah ELSE 0 END) - SUM(CASE WHEN jenis = 'penarikan' THEN jumlah ELSE 0 END) as saldo")
+        ->whereYear('tanggal', $tahunIni)
+        ->groupByRaw("MONTH(tanggal)")
+        ->get()
+        ->keyBy('bulan');
+
+    $tabunganData = [];
+    for ($i = 1; $i <= 12; $i++) {
+        $tabunganData[] = $tabunganBulanan[$i]->saldo ?? 0;
+    }
+
+    // === TOTAL TABUNGAN ===
+    $totalTabungan = Tabungan::selectRaw("
+        SUM(CASE WHEN jenis = 'setoran' THEN jumlah ELSE 0 END) - 
+        SUM(CASE WHEN jenis = 'penarikan' THEN jumlah ELSE 0 END)
+    AS saldo")->value('saldo');
+
+    // === KAS ===
+    $totalDebitKas = TransaksiKas::where('jenis', 'debit')->sum('jumlah');
+    $totalKreditKas = TransaksiKas::where('jenis', 'kredit')->sum('jumlah');
+
+    $kasDebit = TransaksiKas::selectRaw("MONTH(tanggal) as bulan, SUM(jumlah) as total")
+        ->whereYear('tanggal', $tahunIni)
+        ->where('jenis', 'debit')
+        ->groupByRaw("MONTH(tanggal)")
+        ->get()
+        ->keyBy('bulan');
+
+    $kasKredit = TransaksiKas::selectRaw("MONTH(tanggal) as bulan, SUM(jumlah) as total")
+        ->whereYear('tanggal', $tahunIni)
+        ->where('jenis', 'kredit')
+        ->groupByRaw("MONTH(tanggal)")
+        ->get()
+        ->keyBy('bulan');
+
+    $kasDebitData = [];
+    $kasKreditData = [];
+    for ($i = 1; $i <= 12; $i++) {
+        $kasDebitData[] = $kasDebit[$i]->total ?? 0;
+        $kasKreditData[] = $kasKredit[$i]->total ?? 0;
+    }
+
+    // === SANTRI TABUNGAN TERTINGGI ===
+    $santriTabunganTertinggi = DB::table('tabungans')
+        ->select('santris.nama', DB::raw("
+            SUM(CASE WHEN tabungans.jenis = 'setoran' THEN jumlah ELSE 0 END) - 
+            SUM(CASE WHEN tabungans.jenis = 'penarikan' THEN jumlah ELSE 0 END) as saldo
+        "))
+        ->join('santris', 'tabungans.santri_id', '=', 'santris.id')
+        ->groupBy('tabungans.santri_id', 'santris.nama')
+        ->orderByDesc('saldo')
+        ->limit(1)
+        ->first();
+
+  return view('dashboard.ketua', [
+    'totalSantri' => $totalSantri,
+    'totalSantriAktif' => $totalSantriAktif,
+    'totalSantriTidakAktif' => $totalSantriTidakAktif, // ✅ Diperbaiki
+
+    'totalInfaqBulanIni' => $totalInfaqBulanIni,
+    'totalTabungan' => $totalTabungan,
+    'totalDebitKas' => $totalDebitKas,
+    'totalKreditKas' => $totalKreditKas,
+    'santriTabunganTertinggi' => $santriTabunganTertinggi,
+
+    'infaqLabels' => json_encode($bulanLabels),
+    'infaqData' => json_encode($infaqData),
+    'tabunganLabels' => json_encode($bulanLabels),
+    'tabunganData' => json_encode($tabunganData),
+    'kasLabels' => json_encode($bulanLabels),
+    'kasDebit' => json_encode($kasDebitData),
+    'kasKredit' => json_encode($kasKreditData),
+]);
+
+       
+
 }
-
 }
